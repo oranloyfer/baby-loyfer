@@ -193,9 +193,17 @@
     font-family: 'Playfair Display', serif; font-weight: 900;
     font-size: 52px; line-height: 1.1; margin-bottom: 4px;
     transition: color 0.5s;
+    direction: ltr;
   }
   .girl-mode .result-name { color: #fce7f3; }
   .boy-mode .result-name { color: #e0f2fe; }
+
+  .result-nikud {
+    font-size: 32px; font-weight: 400; margin-bottom: 8px;
+    direction: rtl;
+  }
+  .girl-mode .result-nikud { color: #f9a8d4; }
+  .boy-mode .result-nikud { color: #7dd3fc; }
 
   .result-surname {
     font-family: 'Playfair Display', serif; font-weight: 400;
@@ -257,13 +265,64 @@
   }
   .girl-mode .footer { color: #6b4570; }
   .boy-mode .footer { color: #3a6070; }
+
+  /* PROFILE SCREEN */
+  .profile-screen {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 100; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #1a0a1e 0%, #2d1233 30%, #1e0a2e 60%, #120818 100%);
+  }
+  .profile-screen.hidden { display: none; }
+  .profile-title {
+    font-family: 'Playfair Display', serif; font-weight: 900;
+    font-size: 32px; color: #fce7f3; margin-bottom: 8px;
+  }
+  .profile-subtitle {
+    font-size: 14px; color: #d8b4d8; margin-bottom: 30px; font-weight: 300;
+  }
+  .profile-grid {
+    display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
+    max-width: 400px;
+  }
+  .profile-btn {
+    padding: 14px 28px; border-radius: 16px; border: 2px solid rgba(236,72,153,0.3);
+    background: rgba(236,72,153,0.08); color: #f9a8d4;
+    font-size: 18px; font-weight: 600; cursor: pointer;
+    font-family: 'Inter', sans-serif; transition: all 0.3s ease;
+    min-width: 100px;
+  }
+  .profile-btn:hover {
+    background: rgba(236,72,153,0.25); border-color: #ec4899;
+    transform: scale(1.05); box-shadow: 0 4px 20px rgba(236,72,153,0.3);
+  }
+
+  .current-profile {
+    display: inline-block; padding: 4px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 500; cursor: pointer;
+    margin-bottom: 16px;
+  }
+  .girl-mode .current-profile { background: rgba(236,72,153,0.15); color: #f9a8d4; border: 1px solid rgba(236,72,153,0.3); }
+  .boy-mode .current-profile { background: rgba(56,189,248,0.15); color: #7dd3fc; border: 1px solid rgba(56,189,248,0.3); }
+
+  .fav-voters {
+    font-size: 11px; margin-top: 2px; opacity: 0.7;
+  }
+  .fav-chip { display: flex; flex-direction: column; align-items: center; }
 </style>
 </head>
 <body class="girl-mode">
 
+<div class="profile-screen" id="profile-screen">
+  <div class="profile-title">!שלום משפחת לויפר</div>
+  <div class="profile-subtitle">?מי את/ה</div>
+  <div class="profile-grid" id="profile-grid"></div>
+</div>
+
 <div class="stars" id="stars"></div>
 
 <div class="container">
+  <div class="current-profile" id="current-profile" onclick="showProfileScreen()"></div>
   <div class="header-badge">Loyfer Family Expansion Pack</div>
   <h1>איך נקרא<br>לבייבי לויפר?</h1>
   <p class="subtitle">כי "יובל" אף פעם לא היה אופציה</p>
@@ -294,6 +353,7 @@
   <div class="result-card" id="result-card">
     <div class="result-category" id="result-category"></div>
     <div class="result-name" id="result-name"></div>
+    <div class="result-nikud" id="result-nikud"></div>
     <div class="result-surname">LOYFER</div>
     <div class="result-origin" id="result-origin"></div>
     <div class="result-desc" id="result-desc"></div>
@@ -316,218 +376,220 @@
 <script>
 let gender = 'girl';
 let activeCategories = new Set(['All']);
-let favorites = JSON.parse(localStorage.getItem('loyfer-favorites') || '[]');
+let favorites = JSON.parse(localStorage.getItem('loyfer-favorites-v2') || '[]');
 let currentName = null;
 let usedNames = new Set();
+let currentProfile = localStorage.getItem('loyfer-profile') || null;
+const profiles = ['באבא', 'תאתא', 'ניר', 'אמא', 'אבא'];
 
 const nameBank = {
   "One Piece": {
     girl: [
-      { name: "Nami", origin: "One Piece", desc: "The brilliant navigator who charts the course for the Straw Hat Pirates. Survived hell, chose freedom, and outsmarted everyone.", meaning: "Wave in Japanese" },
-      { name: "Robin", origin: "One Piece", desc: "Nico Robin. The last survivor of Ohara, archaeologist who can read the ancient language. Strongest will on the crew.", meaning: "Bright fame" },
-      { name: "Vivi", origin: "One Piece", desc: "Princess Nefertari Vivi. Left her throne to fight alongside pirates and save her kingdom. Royalty with guts.", meaning: "Life, alive" },
-      { name: "Uta", origin: "One Piece Film: Red", desc: "The world's greatest diva with a voice that transcends dimensions. Shanks' daughter.", meaning: "Song in Japanese" },
-      { name: "Reiju", origin: "One Piece", desc: "Vinsmoke Reiju, the Poison Pink. Only sibling with a soul. Genetically enhanced warrior princess.", meaning: "Zero, Two (0, 2) in Japanese" },
-      { name: "Hiyori", origin: "One Piece", desc: "Kozuki Hiyori, princess of Wano. Survived 20 years in disguise waiting to reclaim her homeland.", meaning: "Good day, sunshine" },
-      { name: "Koala", origin: "One Piece", desc: "Former slave turned Revolutionary Army commander. Fights to free the world from the Celestial Dragons.", meaning: "Resilience personified" },
-      { name: "Bonney", origin: "One Piece", desc: "Jewelry Bonney. Supernova pirate captain who can manipulate age itself. Pure chaos energy.", meaning: "Named after real pirate Anne Bonny" },
-      { name: "Toki", origin: "One Piece", desc: "Kozuki Toki. Time-traveling woman who sent the samurai 20 years forward to save Wano.", meaning: "Time in Japanese" },
-      { name: "Hina", origin: "One Piece", desc: "Captain Hina. Marine captain with iron-cage powers. Walks through enemies and they're instantly imprisoned.", meaning: "Sun, sunshine in Japanese" },
-      { name: "Perona", origin: "One Piece", desc: "Gothic ghost princess whose hollow powers make enemies lose all will to fight.", meaning: "Possibly from Persephone" },
+      { name: "Nami", nikud: "נָאמִי", origin: "One Piece", desc: "הנווטת הגאונית של צוות כובע הקש. שרדה גיהינום, בחרה בחופש, והערימה על כולם.", meaning: "גל ביפנית" },
+      { name: "Robin", nikud: "רוֹבִּין", origin: "One Piece", desc: "ניקו רובין. השורדת האחרונה של אוהרה, ארכיאולוגית שיכולה לקרוא את השפה העתיקה.", meaning: "תהילה בוהקת" },
+      { name: "Vivi", nikud: "וִיוִי", origin: "One Piece", desc: "הנסיכה נפרטרי ויוי. עזבה את הכס שלה כדי להילחם לצד פיראטים ולהציל את הממלכה.", meaning: "חיים, חיה" },
+      { name: "Uta", nikud: "אוּטָה", origin: "One Piece Film: Red", desc: "הדיווה הגדולה בעולם עם קול שחוצה ממדים. הבת של שאנקס.", meaning: "שיר ביפנית" },
+      { name: "Reiju", nikud: "רֵיג׳וּ", origin: "One Piece", desc: "וינסמוק רייג׳ו, הורד הרעיל. האחות היחידה עם נשמה. נסיכה לוחמת.", meaning: "אפס-שתיים ביפנית" },
+      { name: "Hiyori", nikud: "הִיוֹרִי", origin: "One Piece", desc: "נסיכת וואנו. שרדה 20 שנה במסווה בהמתנה לשחרר את מולדתה.", meaning: "יום טוב, שמש" },
+      { name: "Koala", nikud: "קוֹאָלָה", origin: "One Piece", desc: "עבדה לשעבר שהפכה למפקדת הצבא המהפכני. נלחמת לשחרר את העולם.", meaning: "סמל של חוסן" },
+      { name: "Bonney", nikud: "בּוֹנִי", origin: "One Piece", desc: "קפטנית פיראטים מסופרנובה שיכולה לשלוט בגיל. אנרגיה של כאוס טהור.", meaning: "על שם הפיראטית אן בוני" },
+      { name: "Toki", nikud: "טוֹקִי", origin: "One Piece", desc: "אישה שנוסעת בזמן ששלחה את הסמוראים 20 שנה קדימה כדי להציל את וואנו.", meaning: "זמן ביפנית" },
+      { name: "Hina", nikud: "הִינָה", origin: "One Piece", desc: "קפטנית של חיל הים עם כוחות כלוב ברזל. עוברת דרך אויבים וכולאת אותם מיד.", meaning: "שמש ביפנית" },
+      { name: "Perona", nikud: "פֶּרוֹנָה", origin: "One Piece", desc: "נסיכת רוחות גותית שהכוחות שלה גורמים לאויבים לאבד כל רצון להילחם.", meaning: "מפרספונה" },
     ],
     boy: [
-      { name: "Zoro", origin: "One Piece", desc: "Roronoa Zoro. Three-sword style. Gets lost everywhere but never loses a fight that matters. Unbreakable loyalty.", meaning: "Inspired by real pirate Fran\u00e7ois l'Olonnais" },
-      { name: "Ace", origin: "One Piece", desc: "Portgas D. Ace. Fire Fist. Lived free, died protecting his brother. The most beloved character in the series.", meaning: "Unity, the best" },
-      { name: "Sanji", origin: "One Piece", desc: "Black Leg Sanji. World-class chef who fights only with kicks to protect his hands for cooking. Chivalry incarnate.", meaning: "Three, Two (3, 2) in Japanese" },
-      { name: "Sabo", origin: "One Piece", desc: "Chief of Staff of the Revolutionary Army. Ace's sworn brother. Inherited the Flame-Flame Fruit. Called the Flame Emperor.", meaning: "Sharp and strong" },
-      { name: "Shanks", origin: "One Piece", desc: "Red-Haired Shanks. One of the Four Emperors. Stopped a war with sheer presence. Bet his arm on the next generation.", meaning: "The coolest pirate name ever" },
-      { name: "Marco", origin: "One Piece", desc: "Marco the Phoenix. Whitebeard's right hand. Can regenerate from any wound with blue flames.", meaning: "Warlike, dedicated to Mars" },
-      { name: "Law", origin: "One Piece", desc: "Trafalgar D. Water Law. Surgeon of Death. Can literally cut and rearrange anything in his room.", meaning: "Justice, rule" },
-      { name: "Oden", origin: "One Piece", desc: "Kozuki Oden. Wouldn't die. Held his retainers above boiling oil for an hour. Legend of Wano.", meaning: "The character made this name legendary" },
-      { name: "Mihawk", origin: "One Piece", desc: "World's greatest swordsman who slices icebergs with a casual swing. Hawk eyes that see everything.", meaning: "Hawk \u2014 evokes precision" },
+      { name: "Zoro", nikud: "זוֹרוֹ", origin: "One Piece", desc: "רורונואה זורו. סגנון שלוש חרבות. הולך לאיבוד בכל מקום אבל אף פעם לא מפסיד קרב שחשוב.", meaning: "בהשראת פיראט אמיתי" },
+      { name: "Ace", nikud: "אֵייס", origin: "One Piece", desc: "פורטגאס ד. אייס. אגרוף האש. חי חופשי, מת כשהגן על אחיו. הדמות האהובה ביותר בסדרה.", meaning: "הטוב ביותר, אחדות" },
+      { name: "Sanji", nikud: "סָאנְג׳י", origin: "One Piece", desc: "שף ברמה עולמית שנלחם רק עם בעיטות כדי להגן על הידיים שלו לבישול.", meaning: "שלוש-שתיים ביפנית" },
+      { name: "Sabo", nikud: "סָאבּוֹ", origin: "One Piece", desc: "ראש המטה של הצבא המהפכני. אחיו המושבע של אייס. ירש את פרי הלהבה.", meaning: "חד וחזק" },
+      { name: "Shanks", nikud: "שָׁנְקְס", origin: "One Piece", desc: "שאנקס בעל השיער האדום. אחד מארבעת הקיסרים. עצר מלחמה בנוכחות בלבד.", meaning: "שם הפיראט הכי מגניב" },
+      { name: "Marco", nikud: "מָארְקוֹ", origin: "One Piece", desc: "מארקו הפניקס. יד ימינו של לבן הזקן. מתחדש מכל פצע עם להבות כחולות.", meaning: "לוחמני, מוקדש למארס" },
+      { name: "Law", nikud: "לוֹ", origin: "One Piece", desc: "טרפלגר ד. ווטר לו. כירורג המוות. יכול לחתוך ולסדר מחדש כל דבר בחדר שלו.", meaning: "צדק, חוק" },
+      { name: "Oden", nikud: "אוֹדֶן", origin: "One Piece", desc: "קוזוקי אודן. סירב למות. החזיק את אנשיו מעל שמן רותח במשך שעה. אגדה.", meaning: "הדמות הפכה את השם לאגדי" },
+      { name: "Mihawk", nikud: "מִיהוֹק", origin: "One Piece", desc: "החייף הגדול בעולם שחותך קרחונים בתנועה אחת. עיני נץ שרואות הכל.", meaning: "נץ — דיוק" },
     ]
   },
   "Attack on Titan": {
     girl: [
-      { name: "Sasha", origin: "Attack on Titan", desc: "Sharpshooter with heart. Saved a child from a Titan with nothing but courage and a bow. Potato girl forever.", meaning: "Defender of mankind" },
-      { name: "Historia", origin: "Attack on Titan", desc: "Secret queen who rejected her puppet role and chose to live for herself \u2014 then saved everyone anyway.", meaning: "History, story" },
-      { name: "Ymir", origin: "Attack on Titan", desc: "First Titan. A slave girl who gained godlike power and waited 2,000 years for freedom.", meaning: "Norse primordial giant from whom the world was made" },
-      { name: "Annie", origin: "Attack on Titan", desc: "The Female Titan. A fighting prodigy who crystallized herself rather than be captured.", meaning: "Grace" },
-      { name: "Hange", origin: "Attack on Titan", desc: "Brilliant mad scientist commander who understood Titans better than anyone alive.", meaning: "Unique to the series" },
-      { name: "Frieda", origin: "Attack on Titan", desc: "Previous holder of the Founding Titan. Tragic queen with unimaginable power she refused to use.", meaning: "Peaceful ruler" },
-      { name: "Pieck", origin: "Attack on Titan", desc: "Cart Titan. The most intelligent warrior who outsmarts everyone from all fours.", meaning: "Peak" },
-      { name: "Kiyomi", origin: "Attack on Titan", desc: "Ambassador from the Eastern nation. Elegant diplomat in a world of war.", meaning: "Pure beauty in Japanese" },
+      { name: "Sasha", nikud: "סָאשָׁה", origin: "Attack on Titan", desc: "צלפית עם לב. הצילה ילד מטיטאן עם אומץ וקשת בלבד. ילדת תפוח האדמה לנצח.", meaning: "מגינה על האנושות" },
+      { name: "Historia", nikud: "הִיסְטוֹרְיָה", origin: "Attack on Titan", desc: "מלכה סודית שדחתה את תפקיד הבובה ובחרה לחיות בשביל עצמה — ואז הצילה את כולם.", meaning: "היסטוריה, סיפור" },
+      { name: "Ymir", nikud: "יְמִיר", origin: "Attack on Titan", desc: "הטיטאנית הראשונה. שפחה שקיבלה כוח אלוהי וחיכתה 2,000 שנה לחופש.", meaning: "ענק ראשוני נורדי שממנו נברא העולם" },
+      { name: "Annie", nikud: "אָנִי", origin: "Attack on Titan", desc: "הטיטאנית הנשית. גאונת לחימה שהקפיאה את עצמה בקריסטל כדי לא להיתפס.", meaning: "חן, חסד" },
+      { name: "Hange", nikud: "הָאנְגֶ׳ה", origin: "Attack on Titan", desc: "מפקדת מדענית מבריקה ומטורפת שהבינה טיטאנים יותר מכל אדם אחר.", meaning: "ייחודי לסדרה" },
+      { name: "Frieda", nikud: "פְרִידָה", origin: "Attack on Titan", desc: "המחזיקה הקודמת של הטיטאן המייסד. מלכה טרגית עם כוח בלתי נתפס.", meaning: "שליטה שלווה" },
+      { name: "Pieck", nikud: "פִּיק", origin: "Attack on Titan", desc: "טיטאנית העגלה. הלוחמת הכי חכמה שמערימה על כולם.", meaning: "פסגה" },
+      { name: "Kiyomi", nikud: "קִיוֹמִי", origin: "Attack on Titan", desc: "שגרירה מהאומה המזרחית. דיפלומטית אלגנטית בעולם של מלחמה.", meaning: "יופי טהור ביפנית" },
     ],
     boy: [
-      { name: "Eren", origin: "Attack on Titan", desc: "The boy who kept moving forward. Started as freedom-seeking hero, became the most complex antagonist in anime history.", meaning: "Saint, holy one (Turkish)" },
-      { name: "Levi", origin: "Attack on Titan", desc: "Captain Levi Ackerman. Humanity's strongest soldier. Mikasa's relative. Cuts Titans like paper with zero wasted movement.", meaning: "Joined, attached (Hebrew)" },
-      { name: "Erwin", origin: "Attack on Titan", desc: "Commander who led a suicide charge and inspired soldiers to die willingly for truth. SHINZOU WO SASAGEYO.", meaning: "Army friend, true friend" },
-      { name: "Armin", origin: "Attack on Titan", desc: "Weakest physically, smartest strategically. Became the Colossal Titan and the voice of peace.", meaning: "Soldier, warrior" },
-      { name: "Falco", origin: "Attack on Titan", desc: "Pure-hearted boy who became the flying Jaw Titan. Literally evolved wings.", meaning: "Falcon" },
-      { name: "Zeke", origin: "Attack on Titan", desc: "Beast Titan who threw rocks like artillery. Mastermind with a terrifying plan for the world.", meaning: "God remembers (Hebrew)" },
-      { name: "Reiner", origin: "Attack on Titan", desc: "The Armored Titan. Most psychologically complex character, torn between two worlds.", meaning: "Advising warrior" },
-      { name: "Colt", origin: "Attack on Titan", desc: "Warrior candidate who chose to die embracing his brother rather than run to safety.", meaning: "Young horse" },
+      { name: "Eren", nikud: "אֶרֶן", origin: "Attack on Titan", desc: "הנער שהמשיך קדימה. התחיל כגיבור חופש, הפך לאנטגוניסט המורכב ביותר באנימה.", meaning: "קדוש (טורקית)" },
+      { name: "Levi", nikud: "לֵוִי", origin: "Attack on Titan", desc: "קפטן לוי אקרמן. החייל הכי חזק של האנושות. קרוב משפחה של מיקאסה.", meaning: "מחובר, צמוד (עברית)" },
+      { name: "Erwin", nikud: "אֶרְוִין", origin: "Attack on Titan", desc: "המפקד שהוביל מתקפת התאבדות והשראה לחיילים למות למען האמת.", meaning: "חבר צבא, חבר אמת" },
+      { name: "Armin", nikud: "אַרְמִין", origin: "Attack on Titan", desc: "הכי חלש פיזית, הכי חכם אסטרטגית. הפך לטיטאן הקולוסאלי ולקול של השלום.", meaning: "חייל, לוחם" },
+      { name: "Falco", nikud: "פָאלְקוֹ", origin: "Attack on Titan", desc: "נער טהור לב שהפך לטיטאן הלסת המעופף. ממש פיתח כנפיים.", meaning: "בז, עיט" },
+      { name: "Zeke", nikud: "זִיק", origin: "Attack on Titan", desc: "טיטאן החיה שזרק סלעים כמו ארטילריה. מוח על עם תוכנית מפחידה.", meaning: "אלוהים זוכר (עברית)" },
+      { name: "Reiner", nikud: "רַיְנֶר", origin: "Attack on Titan", desc: "הטיטאן המשוריין. הדמות הכי מורכבת פסיכולוגית, קרועה בין שני עולמות.", meaning: "לוחם יועץ" },
+      { name: "Colt", nikud: "קוֹלְט", origin: "Attack on Titan", desc: "מועמד לוחם שבחר למות בחיבוק אחיו במקום לברוח.", meaning: "סייח צעיר" },
     ]
   },
   "Popular Anime": {
     girl: [
-      { name: "Hinata", origin: "Naruto", desc: "Hyuga Hinata. The shy girl who stood up to Pain alone to protect the person she loved. Quiet strength.", meaning: "Sunny place, toward the sun" },
-      { name: "Nezuko", origin: "Demon Slayer", desc: "Fought her demon nature through pure love for her brother. The only demon who protects humans.", meaning: "Snowball flower" },
-      { name: "Violet", origin: "Violet Evergarden", desc: "A former weapon of war who learned what 'I love you' means by writing letters for others.", meaning: "Purple flower" },
-      { name: "Erza", origin: "Fairy Tail", desc: "Erza Scarlet. Titania, Queen of the Fairies. Escaped slavery, became the strongest mage in the guild.", meaning: "Derived from Ezra, meaning help" },
-      { name: "Maki", origin: "Jujutsu Kaisen", desc: "Zenin Maki. Born with zero cursed energy in a sorcerer family. Became the strongest through pure skill and rage.", meaning: "True, precious" },
-      { name: "Nobara", origin: "Jujutsu Kaisen", desc: "Kugisaki Nobara. Fights with a hammer and nails. Unapologetically herself. 'I am Kugisaki Nobara!'", meaning: "Wild rose" },
-      { name: "Yor", origin: "Spy x Family", desc: "Yor Forger. Assassin by night, loving mother by day. The most dangerous and adorable woman alive.", meaning: "Thorn Princess" },
-      { name: "Anya", origin: "Spy x Family", desc: "Telepathic child prodigy who secretly holds a spy family together with her mind-reading. Waku waku!", meaning: "Grace, favor" },
-      { name: "Riza", origin: "Fullmetal Alchemist", desc: "Riza Hawkeye. Deadliest sniper in the military who keeps the future leader morally grounded.", meaning: "Devoted, harvester" },
-      { name: "Rukia", origin: "Bleach", desc: "Kuchiki Rukia. From street orphan to captain of the 13th Division. Masters the most beautiful ice Bankai.", meaning: "Light, radiance" },
-      { name: "Chihiro", origin: "Spirited Away", desc: "A 10-year-old who saved her parents and navigated a spirit world through courage and kindness.", meaning: "A thousand fathoms, profound" },
-      { name: "Shinobu", origin: "Demon Slayer", desc: "Insect Hashira. Tiny, elegant, and lethal with poison-laced swordsmanship.", meaning: "Endurance, stealth" },
-      { name: "Rei", origin: "Neon Genesis Evangelion", desc: "Mysterious pilot whose quiet exterior hides a cosmic-level secret identity.", meaning: "Spirit, soul, zero" },
-      { name: "Asuka", origin: "Neon Genesis Evangelion", desc: "Fiery prodigy Eva pilot with unbreakable pride who fights Angels with raw fury.", meaning: "Tomorrow's fragrance, flying bird" },
-      { name: "Faye", origin: "Cowboy Bebop", desc: "Faye Valentine. Cryogenically frozen bounty hunter from the past with razor-sharp survival instincts.", meaning: "Fairy, loyalty" },
-      { name: "Winry", origin: "Fullmetal Alchemist", desc: "Automail engineer genius who builds prosthetic limbs that let the hero fight gods.", meaning: "Unique creation" },
-      { name: "Kiki", origin: "Kiki's Delivery Service", desc: "Young witch who builds an independent life through determination and flying talent.", meaning: "Double joy" },
-      { name: "Nausicaa", origin: "Nausicaa of the Valley of the Wind", desc: "Warrior princess who flies into toxic jungles to save humanity and understands nature's truth.", meaning: "Sea nymph princess (Homer's Odyssey)" },
+      { name: "Hinata", nikud: "הִינָאטָה", origin: "Naruto", desc: "הביישנית שעמדה מול פיין לבד כדי להגן על מי שאהבה. כוח שקט.", meaning: "מקום שטוף שמש" },
+      { name: "Nezuko", nikud: "נֶזוּקוֹ", origin: "Demon Slayer", desc: "נלחמה בטבע השדוני שלה דרך אהבה טהורה לאחיה. השדית היחידה שמגינה על בני אדם.", meaning: "פרח כדור שלג" },
+      { name: "Violet", nikud: "וַיְיוֹלֶט", origin: "Violet Evergarden", desc: "נשק מלחמה לשעבר שלמדה מה המשמעות של 'אני אוהב אותך' דרך כתיבת מכתבים.", meaning: "פרח סגול" },
+      { name: "Erza", nikud: "אֶרְזָה", origin: "Fairy Tail", desc: "ארזה סקארלט. טיטאניה, מלכת הפיות. ברחה מעבדות, הפכה לקוסמת הכי חזקה.", meaning: "עזרה" },
+      { name: "Maki", nikud: "מָאקִי", origin: "Jujutsu Kaisen", desc: "נולדה בלי אנרגיית קללה במשפחת קוסמים. הפכה לחזקה ביותר דרך כישרון וזעם.", meaning: "אמיתי, יקר" },
+      { name: "Nobara", nikud: "נוֹבָּארָה", origin: "Jujutsu Kaisen", desc: "נלחמת עם פטיש ומסמרים. היא זו שהיא בלי התנצלויות.", meaning: "ורד פראי" },
+      { name: "Yor", nikud: "יוֹר", origin: "Spy x Family", desc: "מתנקשת בלילה, אמא אוהבת ביום. האישה הכי מסוכנת ומתוקה בעולם.", meaning: "נסיכת הקוצים" },
+      { name: "Anya", nikud: "אַנְיָה", origin: "Spy x Family", desc: "ילדת פלא טלפתית שמחזיקה משפחת מרגלים ביחד עם קריאת מחשבות. וואקו וואקו!", meaning: "חן, חסד" },
+      { name: "Riza", nikud: "רִיזָה", origin: "Fullmetal Alchemist", desc: "הצלפית הקטלנית ביותר בצבא ששומרת על המנהיג העתידי ביושר.", meaning: "מסורה, קוצרת" },
+      { name: "Rukia", nikud: "רוּקִיָּה", origin: "Bleach", desc: "מיתומת רחוב לקפטנית הדיוויזיה ה-13. מלכת קרח עם לב חם.", meaning: "אור, זוהר" },
+      { name: "Chihiro", nikud: "צ׳יהִירוֹ", origin: "Spirited Away", desc: "ילדה בת 10 שהצילה את הוריה וניווטה בעולם רוחות דרך אומץ וטוב לב.", meaning: "אלף מעמקים, עמוק" },
+      { name: "Shinobu", nikud: "שִׁינוֹבּוּ", origin: "Demon Slayer", desc: "האשירה של החרקים. זעירה, אלגנטית וקטלנית עם חרב מורעלת.", meaning: "סיבולת, התגנבות" },
+      { name: "Rei", nikud: "רֵיי", origin: "Neon Genesis Evangelion", desc: "טייסת מסתורית שהחיצוניות השקטה שלה מסתירה זהות קוסמית.", meaning: "רוח, נשמה, אפס" },
+      { name: "Asuka", nikud: "אָסוּקָה", origin: "Neon Genesis Evangelion", desc: "טייסת גאונה עם גאווה בלתי שבירה שנלחמת במלאכים בזעם טהור.", meaning: "ניחוח של מחר, ציפור מעופפת" },
+      { name: "Faye", nikud: "פֵיי", origin: "Cowboy Bebop", desc: "ציידת ראשים מהעבר שהוקפאה קריוגנית עם אינסטינקטים חדים כתער.", meaning: "פייה, נאמנות" },
+      { name: "Winry", nikud: "וִינְרִי", origin: "Fullmetal Alchemist", desc: "מהנדסת גאונית שבונה גפיים תותבות שמאפשרות לגיבור להילחם באלים.", meaning: "יצירה ייחודית" },
+      { name: "Kiki", nikud: "קִיקִי", origin: "Kiki's Delivery Service", desc: "מכשפה צעירה שבונה חיים עצמאיים דרך נחישות וכישרון תעופה.", meaning: "שמחה כפולה" },
+      { name: "Nausicaa", nikud: "נָאוּסִיקָאה", origin: "Nausicaa of the Valley of the Wind", desc: "נסיכה לוחמת שטסה לתוך ג׳ונגלים רעילים כדי להציל את האנושות.", meaning: "נסיכת נימפת הים" },
     ],
     boy: [
-      { name: "Gojo", origin: "Jujutsu Kaisen", desc: "Gojo Satoru. The strongest sorcerer alive. Six Eyes + Infinity = untouchable. Also hilarious.", meaning: "Limitless" },
-      { name: "Toji", origin: "Jujutsu Kaisen", desc: "Born with zero cursed energy, killed the strongest sorcerers with pure physical ability alone.", meaning: "Rich, fertile land" },
-      { name: "Itachi", origin: "Naruto", desc: "Uchiha Itachi. Sacrificed everything including his reputation to protect his village and his brother.", meaning: "Weasel \u2014 but the character transcended it" },
-      { name: "Minato", origin: "Naruto", desc: "The Yellow Flash. Fastest ninja alive who sealed a demon fox inside his own newborn son to save the village.", meaning: "Harbor, port" },
-      { name: "Spike", origin: "Cowboy Bebop", desc: "Spike Spiegel. Bounty hunter, martial artist, philosopher. The coolest anime character ever drawn.", meaning: "Long, heavy nail" },
-      { name: "Gon", origin: "Hunter x Hunter", desc: "Gon Freecss. Pure-hearted kid with terrifying potential. Would walk through hell for his friends.", meaning: "Derived from good" },
-      { name: "Killua", origin: "Hunter x Hunter", desc: "Zoldyck Killua. Born assassin who chose friendship over his family's darkness. Lightning speed.", meaning: "Lightning incarnate" },
-      { name: "Thorfinn", origin: "Vinland Saga", desc: "From revenge-driven warrior to pacifist explorer. The greatest character arc in anime.", meaning: "Thor's bold voyager" },
-      { name: "Tanjiro", origin: "Demon Slayer", desc: "Kamado Tanjiro. The kindest demon slayer. Fights monsters with empathy. Set your heart ablaze.", meaning: "Charcoal son" },
-      { name: "Rengoku", origin: "Demon Slayer", desc: "Flame Hashira who smiled while dying and told everyone to set their hearts ablaze.", meaning: "Purgatory" },
-      { name: "Mugen", origin: "Samurai Champloo", desc: "Wild, unpredictable, break-dance swordsman. Freedom personified.", meaning: "Infinity" },
-      { name: "Roy", origin: "Fullmetal Alchemist", desc: "Roy Mustang. Flame Alchemist who snaps his fingers and incinerates everything. Chasing the top to fix a nation.", meaning: "King" },
-      { name: "Canute", origin: "Vinland Saga", desc: "Timid prince who transforms into a ruthless king chasing the concept of love through power.", meaning: "Knot (Norse) \u2014 refers to King Canute the Great" },
+      { name: "Gojo", nikud: "גוֹג׳וֹ", origin: "Jujutsu Kaisen", desc: "הקוסם הכי חזק בחיים. שש עיניים + אינסוף = בלתי ניתן לנגיעה. גם מצחיק.", meaning: "ללא גבולות" },
+      { name: "Toji", nikud: "טוֹג׳י", origin: "Jujutsu Kaisen", desc: "נולד בלי אנרגיית קללה, הרג את הקוסמים הכי חזקים עם כוח פיזי טהור בלבד.", meaning: "אדמה עשירה ופורייה" },
+      { name: "Itachi", nikud: "אִיטָאצ׳י", origin: "Naruto", desc: "הקריב הכל כולל המוניטין שלו כדי להגן על הכפר ועל אחיו.", meaning: "סמור — אבל הדמות חרגה מזה" },
+      { name: "Minato", nikud: "מִינָאטוֹ", origin: "Naruto", desc: "הברק הצהוב. הנינג׳ה הכי מהיר שחתם שועל שד בתוך בנו כדי להציל את הכפר.", meaning: "נמל, עגינה" },
+      { name: "Spike", nikud: "סְפָּייק", origin: "Cowboy Bebop", desc: "צייד ראשים, אמן לחימה, פילוסוף. הדמות הכי מגניבה באנימה אי פעם.", meaning: "מסמר ארוך וכבד" },
+      { name: "Gon", nikud: "גוֹן", origin: "Hunter x Hunter", desc: "ילד טהור לב עם פוטנציאל מפחיד. היה עובר דרך גיהינום למען חבריו.", meaning: "טוב" },
+      { name: "Killua", nikud: "קִילּוּאָה", origin: "Hunter x Hunter", desc: "מתנקש מלידה שבחר בחברות על פני חושך משפחתו. מהירות ברק.", meaning: "ברק מגולם" },
+      { name: "Thorfinn", nikud: "תוֹרְפִין", origin: "Vinland Saga", desc: "מלוחם נקמה לחוקר שלום. הקשת הדמותית הגדולה ביותר באנימה.", meaning: "המסע האמיץ של תור" },
+      { name: "Tanjiro", nikud: "טָאנְג׳ירוֹ", origin: "Demon Slayer", desc: "קוטל השדים הכי טוב לב. נלחם במפלצות עם אמפתיה. הציתו את ליבכם.", meaning: "בן הפחם" },
+      { name: "Rengoku", nikud: "רֶנְגוֹקוּ", origin: "Demon Slayer", desc: "האשירה של הלהבה שחייך בזמן שמת ואמר לכולם להצית את ליבם.", meaning: "כור מטהר" },
+      { name: "Mugen", nikud: "מוּגֶן", origin: "Samurai Champloo", desc: "פרוע, בלתי צפוי, סייפן בריקדנס. החופש בצורת אדם.", meaning: "אינסוף" },
+      { name: "Roy", nikud: "רוֹי", origin: "Fullmetal Alchemist", desc: "רוי מוסטאנג. אלכימאי הלהבה שמצליק אצבעות ושורף הכל.", meaning: "מלך" },
+      { name: "Canute", nikud: "קָאנוּט", origin: "Vinland Saga", desc: "נסיך ביישן שהפך למלך אכזרי שרודף אחרי מושג האהבה דרך כוח.", meaning: "קשר (נורדי)" },
     ]
   },
   "Game of Thrones": {
     girl: [
-      { name: "Arya", origin: "Game of Thrones", desc: "A girl has a name. Trained with the Faceless Men, crossed names off her list, sailed west of Westeros.", meaning: "Noble, truthful in Sanskrit" },
-      { name: "Lyanna", origin: "Game of Thrones", desc: "Lyanna Mormont. The 10-year-old Lady of Bear Island who shamed grown lords and killed a giant.", meaning: "Graceful, soft" },
-      { name: "Ygritte", origin: "Game of Thrones", desc: "Kissed by fire. Free folk spearwife who taught Jon Snow everything. 'You know nothing.'", meaning: "Evokes grit" },
-      { name: "Meera", origin: "Game of Thrones", desc: "Meera Reed. Dragged Bran across the frozen North, fought White Walkers, never gave up.", meaning: "Ocean, boundary" },
-      { name: "Nymeria", origin: "Game of Thrones", desc: "Arya's direwolf, named after the warrior queen who led 10,000 ships to found Dorne.", meaning: "Warrior queen of the Rhoynar" },
-      { name: "Brienne", origin: "Game of Thrones", desc: "Brienne of Tarth. Defeated the Hound, knighted by Jaime. The truest knight in Westeros.", meaning: "Noble, strong" },
-      { name: "Olenna", origin: "Game of Thrones", desc: "The Queen of Thorns. 'Tell Cersei. I want her to know it was me.' Most savage exit ever.", meaning: "Shining light" },
-      { name: "Sansa", origin: "Game of Thrones", desc: "Started naive, ended as Queen in the North. Survived Joffrey, Ramsay, and Littlefinger.", meaning: "Praise, charm" },
-      { name: "Margaery", origin: "Game of Thrones", desc: "Political genius who played the game better than almost everyone in King's Landing.", meaning: "Pearl" },
-      { name: "Daenerys", origin: "Game of Thrones", desc: "Mother of Dragons. Walked into fire, freed slaves, conquered with three dragons. Dany Loyfer as nickname.", meaning: "Invented by GRRM" },
+      { name: "Arya", nikud: "אַרְיָה", origin: "Game of Thrones", desc: "לילדה יש שם. התאמנה עם חסרי הפנים, מחקה שמות מהרשימה, הפליגה מערבה.", meaning: "אצילית, אמיתית (סנסקריט)" },
+      { name: "Lyanna", nikud: "לִיאָנָה", origin: "Game of Thrones", desc: "גבירת אי הדובים בת ה-10 שביישה לורדים מבוגרים והרגה ענק.", meaning: "חיננית, רכה" },
+      { name: "Ygritte", nikud: "אִיגְרִיט", origin: "Game of Thrones", desc: "נשוקת אש. לוחמת חופשייה שלימדה את ג׳ון סנואו הכל. 'אתה לא יודע כלום.'", meaning: "עוצמה, נחישות" },
+      { name: "Meera", nikud: "מִירָה", origin: "Game of Thrones", desc: "גררה את בראן לאורך הצפון הקפוא, נלחמה בהולכי לבן, אף פעם לא ויתרה.", meaning: "אוקיינוס, גבול" },
+      { name: "Nymeria", nikud: "נִימֶרְיָה", origin: "Game of Thrones", desc: "זאבת הדיר של אריה. נקראה על שם מלכת הלוחמות שהובילה 10,000 ספינות.", meaning: "מלכת לוחמות הרוינאר" },
+      { name: "Brienne", nikud: "בְּרִיאֶן", origin: "Game of Thrones", desc: "ברין מטארת׳. ניצחה את האאונד, הוענקה לה אבירות. האבירה הכי אמיתית.", meaning: "אצילית, חזקה" },
+      { name: "Olenna", nikud: "אוֹלֶנָה", origin: "Game of Thrones", desc: "מלכת הקוצים. 'תגידי לסרסיי. אני רוצה שהיא תדע שזה הייתי אני.'", meaning: "אור זוהר" },
+      { name: "Sansa", nikud: "סָאנְסָה", origin: "Game of Thrones", desc: "התחילה תמימה, סיימה כמלכת הצפון. שרדה את ג׳ופרי, רמזי וליטלפינגר.", meaning: "שבח, קסם" },
+      { name: "Margaery", nikud: "מָארְגֶ׳רִי", origin: "Game of Thrones", desc: "גאונת פוליטיקה שיחקה את המשחק יותר טוב מכמעט כולם.", meaning: "פנינה" },
+      { name: "Daenerys", nikud: "דֵּנֶרִיס", origin: "Game of Thrones", desc: "אם הדרקונים. נכנסה לאש, שחררה עבדים, כבשה עם שלושה דרקונים. דני לויפר בקיצור.", meaning: "שם שהומצא" },
     ],
     boy: [
-      { name: "Robb", origin: "Game of Thrones", desc: "The Young Wolf. Never lost a battle. King in the North at 16.", meaning: "Bright fame" },
-      { name: "Tyrion", origin: "Game of Thrones", desc: "The Imp. Smartest person in Westeros. 'I drink and I know things.'", meaning: "Derived from Tyr, Norse god of war" },
-      { name: "Oberyn", origin: "Game of Thrones", desc: "The Red Viper of Dorne. Poisoner, warrior, lover, scholar. The most charismatic character on the show.", meaning: "Noble bear" },
-      { name: "Gendry", origin: "Game of Thrones", desc: "Robert's bastard turned Lord of Storm's End. Forged weapons from dragonglass to fight the dead.", meaning: "Derived from Gentry, noble born" },
-      { name: "Tormund", origin: "Game of Thrones", desc: "Giantsbane. Drank giant's milk. 'I've always had blue eyes!' Peak energy.", meaning: "Thor's protection" },
-      { name: "Daemon", origin: "House of the Dragon", desc: "Rogue prince, dragonrider, the most dangerous Targaryen who ever lived.", meaning: "Spirit, divine power (Greek)" },
-      { name: "Drogo", origin: "Game of Thrones", desc: "Khal Drogo. Undefeated Dothraki warrior king. 'Moon of my life.'", meaning: "Precious, dear" },
-      { name: "Jaime", origin: "Game of Thrones", desc: "The Kingslayer who became one of the most complex redemption arcs in television.", meaning: "Supplanter" },
-      { name: "Theon", origin: "Game of Thrones", desc: "Broken by Ramsay, rebuilt himself, charged at the Night King. Died with his name restored.", meaning: "God (Greek)" },
-      { name: "Davos", origin: "Game of Thrones", desc: "Smuggler turned Hand of the King. Most honest and loyal man in Westeros.", meaning: "Beloved" },
-      { name: "Aegon", origin: "House of the Dragon", desc: "The Conqueror who united Westeros with three dragons. Jon Snow's true name.", meaning: "Sounds like aeon" },
+      { name: "Robb", nikud: "רוֹבּ", origin: "Game of Thrones", desc: "הזאב הצעיר. אף פעם לא הפסיד קרב. מלך הצפון בגיל 16.", meaning: "תהילה בוהקת" },
+      { name: "Tyrion", nikud: "טִירְיוֹן", origin: "Game of Thrones", desc: "הגמד. האדם הכי חכם בווסטרוס. 'אני שותה ואני יודע דברים.'", meaning: "מטיר, אל המלחמה הנורדי" },
+      { name: "Oberyn", nikud: "אוֹבֶּרִין", origin: "Game of Thrones", desc: "הצפע האדום של דורן. מרעיל, לוחם, מאהב, חוקר. הכי כריזמטי בסדרה.", meaning: "דוב אציל" },
+      { name: "Gendry", nikud: "גֶ׳נְדְרִי", origin: "Game of Thrones", desc: "הממזר של רוברט שהפך ללורד. חישל נשק מזכוכית דרקון להילחם במתים.", meaning: "ממשפחה אצילית" },
+      { name: "Tormund", nikud: "טוֹרְמוּנְד", origin: "Game of Thrones", desc: "קוטל הענקים. שתה חלב ענקית. 'תמיד היו לי עיניים כחולות!' אנרגיה מקסימלית.", meaning: "הגנת תור" },
+      { name: "Daemon", nikud: "דֵיימוֹן", origin: "House of the Dragon", desc: "הנסיך הסורר, רוכב דרקון, הטארגריין הכי מסוכן שחי אי פעם.", meaning: "רוח, כוח אלוהי (יוונית)" },
+      { name: "Drogo", nikud: "דְרוֹגוֹ", origin: "Game of Thrones", desc: "קאל דרוגו. מלך לוחם דותראקי בלתי מנוצח. 'ירח חיי.'", meaning: "יקר, חביב" },
+      { name: "Jaime", nikud: "ג׳יימי", origin: "Game of Thrones", desc: "רוצח המלך שהפך לקשת גאולה מורכבת בטלוויזיה.", meaning: "מחליף, תופס מקום" },
+      { name: "Theon", nikud: "תֵּיאוֹן", origin: "Game of Thrones", desc: "נשבר על ידי רמזי, בנה את עצמו מחדש, רץ לעבר מלך הלילה. מת כששמו חזר.", meaning: "אלוהים (יוונית)" },
+      { name: "Davos", nikud: "דָאווֹס", origin: "Game of Thrones", desc: "מבריח שהפך ליד המלך. האדם הכי ישר ונאמן בווסטרוס.", meaning: "אהוב" },
+      { name: "Aegon", nikud: "אֵיגוֹן", origin: "House of the Dragon", desc: "הכובש שאיחד את ווסטרוס עם שלושה דרקונים. השם האמיתי של ג׳ון סנואו.", meaning: "נשמע כמו עידן" },
     ]
   },
   "Nintendo": {
     girl: [
-      { name: "Zelda", origin: "The Legend of Zelda", desc: "Princess Zelda. Wisdom incarnate. Fights alongside Link across every timeline. Gaming royalty.", meaning: "Gray fighting maid (Germanic)" },
-      { name: "Samus", origin: "Metroid", desc: "Samus Aran. Raised by aliens, hunts space pirates solo. The original gaming badass.", meaning: "Created name, unique" },
-      { name: "Rosalina", origin: "Super Mario Galaxy", desc: "Guardian of the cosmos. Watches over the Lumas from the Comet Observatory. Cosmic queen.", meaning: "Little rose" },
-      { name: "Lucina", origin: "Fire Emblem", desc: "Princess who traveled back in time to prevent the apocalypse. Disguised herself as Marth.", meaning: "Light, illumination" },
-      { name: "Midna", origin: "Twilight Princess", desc: "Twilight Princess herself. Sarcastic, powerful, and revealed as the true ruler of the Twilight Realm.", meaning: "Derived from midnight" },
-      { name: "Palutena", origin: "Kid Icarus", desc: "Goddess of Light. Commands armies, cracks jokes, fights alongside Pit.", meaning: "Derived from Pallas Athena" },
-      { name: "Urbosa", origin: "Breath of the Wild", desc: "Gerudo chieftain Champion who commands lightning and is descended from warrior queens.", meaning: "Powerful and regal" },
-      { name: "Mipha", origin: "Breath of the Wild", desc: "Zora princess and Champion whose healing grace protects Link even after death.", meaning: "Elegant and gentle" },
-      { name: "Nayru", origin: "The Legend of Zelda", desc: "Named after the goddess of wisdom. One of the three golden goddesses who created Hyrule.", meaning: "Wisdom (Zelda mythology)" },
-      { name: "Riju", origin: "Breath of the Wild", desc: "Youngest Gerudo chief. Rides a sand seal into battle like a queen.", meaning: "Short, regal" },
-      { name: "Edelgard", origin: "Fire Emblem: Three Houses", desc: "Emperor who declared war on the gods themselves to free humanity from divine control.", meaning: "Noble guardian" },
+      { name: "Zelda", nikud: "זֶלְדָה", origin: "The Legend of Zelda", desc: "הנסיכה זלדה. חוכמה מגולמת. נלחמת לצד לינק לאורך כל ציר הזמן. מלוכה של גיימינג.", meaning: "לוחמת אפורה (גרמנית)" },
+      { name: "Samus", nikud: "סָאמוּס", origin: "Metroid", desc: "סאמוס אראן. גודלה על ידי חייזרים, ציידת שודדי חלל לבד. הבאדאס המקורית.", meaning: "שם ייחודי שנוצר" },
+      { name: "Rosalina", nikud: "רוֹזָלִינָה", origin: "Super Mario Galaxy", desc: "שומרת הקוסמוס. משגיחה על הלומות ממצפה השביט. מלכת החלל.", meaning: "ורד קטן" },
+      { name: "Lucina", nikud: "לוּצ׳ינָה", origin: "Fire Emblem", desc: "נסיכה שנסעה אחורה בזמן כדי למנוע את האפוקליפסה.", meaning: "אור, הארה" },
+      { name: "Midna", nikud: "מִידְנָה", origin: "Twilight Princess", desc: "נסיכת הדמדומים עצמה. ציניקית, חזקה, והתגלתה כמלכה האמיתית.", meaning: "מחצות הלילה" },
+      { name: "Palutena", nikud: "פָּאלוּטֶנָה", origin: "Kid Icarus", desc: "אלת האור. מפקדת צבאות, מצחיקה, נלחמת לצד פיט.", meaning: "מפאלאס אתנה" },
+      { name: "Urbosa", nikud: "אוּרְבּוֹסָה", origin: "Breath of the Wild", desc: "מנהיגת הגרודו ואלופה. לוחמת שולטת בברקים.", meaning: "חזקה ומלכותית" },
+      { name: "Mipha", nikud: "מִיפָה", origin: "Breath of the Wild", desc: "נסיכת הזורה ואלופה. חסד הריפוי שלה מגן על לינק גם אחרי המוות.", meaning: "אלגנטית ועדינה" },
+      { name: "Nayru", nikud: "נָאיְרוּ", origin: "The Legend of Zelda", desc: "נקראה על שם אלת החוכמה. אחת משלוש האלות שיצרו את היירול.", meaning: "חוכמה" },
+      { name: "Riju", nikud: "רִיג׳וּ", origin: "Breath of the Wild", desc: "המנהיגה הצעירה ביותר של הגרודו. רוכבת על חותם חול לקרב כמו מלכה.", meaning: "קצר ומלכותי" },
+      { name: "Edelgard", nikud: "אֶדֶלְגָארְד", origin: "Fire Emblem: Three Houses", desc: "קיסרית שהכריזה מלחמה על האלים עצמם כדי לשחרר את האנושות.", meaning: "שומרת אצילית" },
     ],
     boy: [
-      { name: "Link", origin: "The Legend of Zelda", desc: "The Hero of Time. Silent, brave, picks up every damn pot. Gaming's most enduring hero.", meaning: "The link between player and game" },
-      { name: "Fox", origin: "Star Fox", desc: "Fox McCloud. Ace pilot, leader of Star Fox team. 'Do a barrel roll!'", meaning: "Sharp, quick, cunning" },
-      { name: "Ness", origin: "EarthBound", desc: "A kid from Onett who saved the world with a baseball bat and psychic powers.", meaning: "Headland, promontory" },
-      { name: "Marth", origin: "Fire Emblem", desc: "The Hero-King. United the continent, wielded the divine Falchion. Where Fire Emblem began.", meaning: "Dedicated to Mars" },
-      { name: "Ike", origin: "Fire Emblem", desc: "'I fight for my friends.' Mercenary son who became a legend. The people's champion.", meaning: "Laughter (Hebrew)" },
-      { name: "Sidon", origin: "Breath of the Wild", desc: "Zora prince with the most radiant smile in gaming who inspires Link with pure charisma.", meaning: "Fishing place (Biblical)" },
-      { name: "Rex", origin: "Xenoblade Chronicles 2", desc: "Salvager who bonds with the legendary blade Pyra and fights to reach Elysium.", meaning: "King" },
-      { name: "Dimitri", origin: "Fire Emblem: Three Houses", desc: "Prince driven to madness by vengeance who claws his way back to become a just king.", meaning: "Earth-lover (Greek)" },
-      { name: "Revali", origin: "Breath of the Wild", desc: "Rito archer Champion who created his own wind technique through sheer ego and talent.", meaning: "Sounds like reveal and rival" },
+      { name: "Link", nikud: "לִינְק", origin: "The Legend of Zelda", desc: "גיבור הזמן. שקט, אמיץ, מרים כל סיר. הגיבור הכי עמיד בגיימינג.", meaning: "החיבור בין השחקן למשחק" },
+      { name: "Fox", nikud: "פוֹקְס", origin: "Star Fox", desc: "פוקס מקלאוד. טייס אס, מנהיג צוות סטארפוקס. 'תעשה גלגול חבית!'", meaning: "שועל — חד, מהיר, ערום" },
+      { name: "Ness", nikud: "נֶס", origin: "EarthBound", desc: "ילד מאוניט שהציל את העולם עם מחבט בייסבול וכוחות פסיכיים.", meaning: "לשון גבעה" },
+      { name: "Marth", nikud: "מָארְת׳", origin: "Fire Emblem", desc: "המלך-הגיבור. איחד את היבשת, שלף את הפאלשיון.", meaning: "מוקדש למארס" },
+      { name: "Ike", nikud: "אָייק", origin: "Fire Emblem", desc: "'אני נלחם למען החברים שלי.' בן שכיר חרב שהפך לאגדה. אלוף העם.", meaning: "צחוק (עברית)" },
+      { name: "Sidon", nikud: "סִידוֹן", origin: "Breath of the Wild", desc: "נסיך הזורה עם החיוך הכי קורן בגיימינג.", meaning: "מקום דיג (מקראי)" },
+      { name: "Rex", nikud: "רֶקְס", origin: "Xenoblade Chronicles 2", desc: "מחלץ שמתחבר ללהב האגדי פיירה ונלחם להגיע לאליזיום.", meaning: "מלך" },
+      { name: "Dimitri", nikud: "דִימִיטְרִי", origin: "Fire Emblem: Three Houses", desc: "נסיך שנטרף על ידי נקמה וטיפס חזרה כדי להפוך למלך צודק.", meaning: "אוהב אדמה (יוונית)" },
+      { name: "Revali", nikud: "רֶוָאלִי", origin: "Breath of the Wild", desc: "קשת ריטו ואלוף שיצר טכניקת רוח משלו דרך אגו וכישרון טהור.", meaning: "חשיפה ויריבות" },
     ]
   },
   "Movies": {
     girl: [
-      { name: "Ripley", origin: "Alien", desc: "Ellen Ripley. The original 'final girl' who fought xenomorphs across four films. Genre-defining badass.", meaning: "From the strip of clearing" },
-      { name: "Trinity", origin: "The Matrix", desc: "Trinity. Black leather, rooftop runs, saved Neo with a kiss. 'Dodge this.'", meaning: "Three, triad" },
-      { name: "Leia", origin: "Star Wars", desc: "Princess, general, rebel leader. Strangled Jabba with her own chains. 'I love you.' 'I know.'", meaning: "Child of heaven (Hawaiian)" },
-      { name: "Padme", origin: "Star Wars", desc: "Queen at 14, senator, secret warrior. Fought for democracy until her last breath.", meaning: "Lotus flower" },
-      { name: "Jyn", origin: "Star Wars: Rogue One", desc: "Rebel who led the suicide mission to steal the Death Star plans. Rebellions are built on hope.", meaning: "Short, punchy, powerful" },
-      { name: "Luna", origin: "Harry Potter", desc: "Luna Lovegood. Saw the world differently and was right about everything. Brave, weird, wonderful.", meaning: "Moon" },
-      { name: "Furiosa", origin: "Mad Max", desc: "Imperator Furiosa. One-armed war captain who led the greatest chase scene in cinema to free enslaved women.", meaning: "Furious one" },
-      { name: "Eowyn", origin: "Lord of the Rings", desc: "'I am no man.' Killed the Witch-King of Angmar. Strongest moment in the trilogy.", meaning: "Horse joy" },
-      { name: "Arwen", origin: "Lord of the Rings", desc: "Elven princess who chose mortality for love. Gave up eternal life for Aragorn.", meaning: "Noble maiden (Elvish)" },
-      { name: "Galadriel", origin: "Lord of the Rings", desc: "Most powerful elf in Middle-earth. Resisted the One Ring. Diminished rather than take power.", meaning: "Maiden crowned with radiant garland" },
-      { name: "Shuri", origin: "Black Panther", desc: "Teenage genius who designed Wakanda's most advanced tech and became Black Panther.", meaning: "Village (Swahili)" },
-      { name: "Hermione", origin: "Harry Potter", desc: "Brightest witch of her age who carried Harry and Ron through everything with brains and bravery.", meaning: "Earthly, messenger" },
-      { name: "Selene", origin: "Underworld", desc: "Vampire death dealer. Centuries old, still dangerous, still elegant.", meaning: "Moon goddess" },
-      { name: "Nova", origin: "Marvel / Sci-Fi", desc: "The name means new star. Used across Marvel, Planet of the Apes, and countless sci-fi universes.", meaning: "New star that suddenly increases in brightness" },
-      { name: "Nebula", origin: "Marvel", desc: "Rebuilt herself from cybernetic parts after every defeat. Ultimate perseverance and redemption.", meaning: "Cloud, mist (astronomical)" },
+      { name: "Ripley", nikud: "רִיפְּלִי", origin: "Alien", desc: "אלן ריפלי. הבאדאס המקורית שנלחמה בחייזרים לאורך ארבעה סרטים.", meaning: "משטח של חורשה" },
+      { name: "Trinity", nikud: "טְרִינִיטִי", origin: "The Matrix", desc: "טריניטי. עור שחור, ריצות על גגות, הצילה את ניאו עם נשיקה.", meaning: "שלישייה" },
+      { name: "Leia", nikud: "לֵיאָה", origin: "Star Wars", desc: "נסיכה, גנרלית, מנהיגת המרד. חנקה את ג׳אבה עם השרשרת שלה עצמה.", meaning: "ילדת שמיים (הוואית)" },
+      { name: "Padme", nikud: "פָּאדְמֵה", origin: "Star Wars", desc: "מלכה בגיל 14, סנאטורית, לוחמת חשאית. נלחמה על הדמוקרטיה עד נשימתה האחרונה.", meaning: "פרח לוטוס" },
+      { name: "Jyn", nikud: "ג׳ין", origin: "Star Wars: Rogue One", desc: "מורדת שהובילה משימת התאבדות לגנוב את תוכניות כוכב המוות.", meaning: "קצר, חזק, חד" },
+      { name: "Luna", nikud: "לוּנָה", origin: "Harry Potter", desc: "לונה לאבגוד. ראתה את העולם אחרת וצדקה בכל דבר. אמיצה, מוזרה, נפלאה.", meaning: "ירח" },
+      { name: "Furiosa", nikud: "פְיוּרִיוֹסָה", origin: "Mad Max", desc: "מפקדת מלחמה בעלת זרוע אחת שהובילה את מרדף הקולנוע הגדול ביותר.", meaning: "זועמת" },
+      { name: "Eowyn", nikud: "אֵיאוֹוִין", origin: "Lord of the Rings", desc: "'אני לא גבר.' הרגה את מלך המכשפים. הרגע הכי חזק בטרילוגיה.", meaning: "שמחת סוס" },
+      { name: "Arwen", nikud: "אַרְוֶון", origin: "Lord of the Rings", desc: "נסיכה אלפית שבחרה בתמותה למען האהבה. ויתרה על חיי נצח בשביל אראגורן.", meaning: "נערה אצילית (אלפית)" },
+      { name: "Galadriel", nikud: "גָּאלָאדְרִיאֵל", origin: "Lord of the Rings", desc: "האלפייה הכי חזקה בתבל. עמדה בפני הטבעת האחת. בחרה להתמעט.", meaning: "עטורה בזר זוהר" },
+      { name: "Shuri", nikud: "שׁוּרִי", origin: "Black Panther", desc: "גאונה בגיל ההתבגרות שעיצבה את הטכנולוגיה הכי מתקדמת של ווקאנדה.", meaning: "כפר (סוואהילית)" },
+      { name: "Hermione", nikud: "הֶרְמַיוֹנִי", origin: "Harry Potter", desc: "המכשפה הכי מבריקה בדורה שנשאה את הארי ורון דרך הכל עם מוחות ואומץ.", meaning: "ארצית, שליחה" },
+      { name: "Selene", nikud: "סֶלֶנֶה", origin: "Underworld", desc: "סוחרת מוות ערפדית. בת מאות שנים, עדיין מסוכנת, עדיין אלגנטית.", meaning: "אלת הירח" },
+      { name: "Nova", nikud: "נוֹבָה", origin: "Marvel / Sci-Fi", desc: "השם אומר כוכב חדש. מופיע לאורך מארוול, כוכב הקופים, ועולמות מד״ב אינספור.", meaning: "כוכב חדש שמתבהר פתאום" },
+      { name: "Nebula", nikud: "נֶבְּיוּלָה", origin: "Marvel", desc: "בנתה את עצמה מחדש מחלקים סייבורגיים אחרי כל תבוסה. התמדה וגאולה.", meaning: "ענן, ערפל (אסטרונומי)" },
     ],
     boy: [
-      { name: "Neo", origin: "The Matrix", desc: "The One. Woke up from the simulation. 'I know kung fu.' Changed cinema forever.", meaning: "New" },
-      { name: "Logan", origin: "X-Men", desc: "Wolverine. Adamantium claws, regeneration, and the most emotional superhero farewell ever filmed.", meaning: "Little hollow" },
-      { name: "Maximus", origin: "Gladiator", desc: "'Father to a murdered son, husband to a murdered wife, and I will have my vengeance.' Enough said.", meaning: "Greatest" },
-      { name: "Aragorn", origin: "Lord of the Rings", desc: "The ranger who became king. Led the charge at the Black Gate knowing he might die.", meaning: "Noble valor (Elvish)" },
-      { name: "Maverick", origin: "Top Gun", desc: "Pete 'Maverick' Mitchell. 'I feel the need... the need for speed.' The ultimate call sign.", meaning: "Independent, nonconformist" },
-      { name: "Atlas", origin: "Greek Myth / Sci-Fi", desc: "The titan who held up the sky. In sci-fi, the name of stations, cities, and heroes.", meaning: "Bearer of the heavens" },
-      { name: "Kylo", origin: "Star Wars", desc: "Kylo Ren. Conflicted, powerful, dramatic. The best villain entrance in modern Star Wars.", meaning: "Sky (derived)" },
-      { name: "Loki", origin: "Norse Myth / Marvel", desc: "God of Mischief. Shapeshifter. Died for his brother. 'I assure you, brother, the sun will shine on us again.'", meaning: "Trickster, airy" },
-      { name: "Cassian", origin: "Star Wars: Rogue One", desc: "Intelligence officer who gave everything for the Rebellion. Fighting since age six.", meaning: "Sounds noble (from Cassius)" },
-      { name: "Sirius", origin: "Harry Potter", desc: "Wrongly imprisoned godfather who escaped Azkaban. Dog-transforming rebel hero. Brightest star in the sky.", meaning: "The Dog Star, burning" },
-      { name: "Draco", origin: "Harry Potter", desc: "Rival trapped by his family's darkness. Complex antagonist with a redemption arc.", meaning: "Dragon" },
-      { name: "Morpheus", origin: "The Matrix", desc: "Believed in The One when nobody else did. Freed Neo and trained him to break reality.", meaning: "God of dreams, shaper" },
-      { name: "Anakin", origin: "Star Wars", desc: "The Chosen One. Born from the Force itself. Fell to darkness, redeemed by his son's love.", meaning: "Warrior, giant" },
-      { name: "Kael", origin: "Fantasy Films", desc: "Dark commander archetype. Sounds sharp, elven, and powerful.", meaning: "Mighty warrior (Gaelic)" },
-      { name: "Fenrir", origin: "Norse Myth / Harry Potter", desc: "The giant wolf destined to swallow the sun. Terrifying and mythic.", meaning: "Fen dweller (Old Norse)" },
+      { name: "Neo", nikud: "נִיאוֹ", origin: "The Matrix", desc: "הנבחר. התעורר מהסימולציה. 'אני יודע קונג פו.' שינה את הקולנוע לנצח.", meaning: "חדש" },
+      { name: "Logan", nikud: "לוֹגָן", origin: "X-Men", desc: "וולברין. טפרי אדמנטיום, התחדשות, ופרידת גיבורי העל הכי רגשית אי פעם.", meaning: "עמק קטן" },
+      { name: "Maximus", nikud: "מָאקְסִימוּס", origin: "Gladiator", desc: "'אבא של בן שנרצח, בעל של אישה שנרצחה, ואני אנקום.' מספיק נאמר.", meaning: "הגדול ביותר" },
+      { name: "Aragorn", nikud: "אָרָאגוֹרְן", origin: "Lord of the Rings", desc: "הסייר שהפך למלך. הוביל את המתקפה בשער השחור בידיעה שייתכן וימות.", meaning: "גבורה אצילית (אלפית)" },
+      { name: "Maverick", nikud: "מָאבְרִיק", origin: "Top Gun", desc: "'אני מרגיש את הצורך... הצורך במהירות.' סמל הקריאה האולטימטיבי.", meaning: "עצמאי, לא קונפורמיסט" },
+      { name: "Atlas", nikud: "אַטְלָס", origin: "Greek Myth / Sci-Fi", desc: "הטיטאן שהחזיק את השמיים. במד״ב, שם של תחנות, ערים וגיבורים.", meaning: "נושא השמיים" },
+      { name: "Kylo", nikud: "קָיילוֹ", origin: "Star Wars", desc: "קיילו רן. מתלבט, חזק, דרמטי. הכניסה הכי טובה של נבל במלחמת הכוכבים.", meaning: "שמיים" },
+      { name: "Loki", nikud: "לוֹקִי", origin: "Norse Myth / Marvel", desc: "אל הערמומיות. משנה צורה. מת למען אחיו. 'השמש תאיר עלינו שוב.'", meaning: "ערמומי, אווירי" },
+      { name: "Cassian", nikud: "קָאסִיאָן", origin: "Star Wars: Rogue One", desc: "קצין מודיעין שנתן הכל למען המרד. נלחם מגיל שש.", meaning: "נשמע אצילי" },
+      { name: "Sirius", nikud: "סִירִיוּס", origin: "Harry Potter", desc: "סנדק שנכלא בעוול שברח מאזקבאן. הכוכב הכי בוהק בשמיים.", meaning: "כוכב הכלב, בוער" },
+      { name: "Draco", nikud: "דְרֵיקוֹ", origin: "Harry Potter", desc: "יריב שלכוד בחושך משפחתו. אנטגוניסט מורכב עם קשת גאולה.", meaning: "דרקון" },
+      { name: "Morpheus", nikud: "מוֹרְפֵיאוּס", origin: "The Matrix", desc: "האמין בנבחר כשאף אחד לא האמין. שחרר את ניאו ואימן אותו לשבור את המציאות.", meaning: "אל החלומות, מעצב" },
+      { name: "Anakin", nikud: "אָנָאקִין", origin: "Star Wars", desc: "הנבחר. נולד מהכוח עצמו. נפל לצד האפל, נגאל על ידי אהבת בנו.", meaning: "לוחם, ענק" },
+      { name: "Kael", nikud: "קָאֵל", origin: "Fantasy Films", desc: "דמות מפקד אפל. נשמע חד, אלפי, וחזק.", meaning: "לוחם אדיר (גאלית)" },
+      { name: "Fenrir", nikud: "פֶנְרִיר", origin: "Norse Myth / Harry Potter", desc: "הזאב הענק שנגזר עליו לבלוע את השמש. מפחיד ומיתולוגי.", meaning: "יושב ביצות (נורדית עתיקה)" },
     ]
   },
   "Historical Legends": {
     girl: [
-      { name: "Frida", origin: "Frida Kahlo", desc: "Mexican painter who turned pain into the most powerful art of the 20th century. Unibrow icon.", meaning: "Peace, beloved" },
-      { name: "Ada", origin: "Ada Lovelace", desc: "The world's first computer programmer. In the 1840s. A woman. Before computers existed.", meaning: "Noble, adornment" },
-      { name: "Artemis", origin: "Greek Mythology", desc: "Goddess of the hunt, the moon, and the wild. Twin of Apollo, protector of young women.", meaning: "Safe, bear goddess" },
-      { name: "Freya", origin: "Norse Mythology", desc: "Goddess of love, war, and death who rides a chariot pulled by cats. Collects half the slain warriors.", meaning: "Noble woman, lady" },
-      { name: "Athena", origin: "Greek Mythology", desc: "Goddess of wisdom and strategic warfare. Born fully armored from Zeus's head.", meaning: "Sharp, praise" },
-      { name: "Boudica", origin: "Celtic Queen (60 AD)", desc: "Led a revolt against the Roman Empire. Burned London to the ground. They found the ash layer.", meaning: "Victory" },
-      { name: "Hypatia", origin: "Ancient Alexandria", desc: "Mathematician, astronomer, philosopher. Last great thinker of ancient Alexandria.", meaning: "Supreme, highest" },
-      { name: "Cleopatra", origin: "Egyptian Queen", desc: "Spoke 9 languages. Seduced Caesar and Antony. Ruled Egypt for 21 years. Not just a pretty face. Cleo for short.", meaning: "Glory of the father" },
-      { name: "Valentina", origin: "Valentina Tereshkova", desc: "First woman in space. 1963. Solo mission. The Earth is blue and she proved it.", meaning: "Strength, health" },
-      { name: "Zenobia", origin: "Queen of Palmyra (3rd century)", desc: "Warrior queen who conquered Egypt and half the Roman East before Rome sent an entire army to stop her.", meaning: "Life of Zeus" },
-      { name: "Tomoe", origin: "Tomoe Gozen (12th century Japan)", desc: "Samurai warrior woman who decapitated enemy generals and rode into battle first.", meaning: "Blessing, beautiful friend" },
-      { name: "Valkyrie", origin: "Norse Mythology", desc: "Divine warrior women who decide who lives and dies in battle. Choosers of the slain.", meaning: "Chooser of the slain" },
-      { name: "Kira", origin: "Multiple Cultures", desc: "Used across Russian, Japanese, and Irish cultures. Evokes light and power.", meaning: "Ruler (Russian), sparkle (Japanese), dark-haired (Irish)" },
-      { name: "Sappho", origin: "Greek Poet (6th century BC)", desc: "Greatest lyric poet of antiquity. Plato called her the Tenth Muse.", meaning: "Sapphire" },
+      { name: "Frida", nikud: "פְרִידָה", origin: "Frida Kahlo", desc: "ציירת מקסיקנית שהפכה כאב לאמנות הכי חזקה של המאה ה-20.", meaning: "שלום, אהובה" },
+      { name: "Ada", nikud: "אֵיידָה", origin: "Ada Lovelace", desc: "המתכנתת הראשונה בעולם. בשנות ה-1840. אישה. לפני שמחשבים נוצרו.", meaning: "אצילית, קישוט" },
+      { name: "Artemis", nikud: "אַרְטֶמִיס", origin: "Greek Mythology", desc: "אלת הציד, הירח והטבע הפראי. תאומה של אפולו, מגינת הנשים הצעירות.", meaning: "בטוחה, אלת הדובים" },
+      { name: "Freya", nikud: "פְרֵיאָה", origin: "Norse Mythology", desc: "אלת האהבה, המלחמה והמוות שרוכבת על מרכבה שנמשכת על ידי חתולים.", meaning: "אישה אצילית, גברת" },
+      { name: "Athena", nikud: "אָתֵינָה", origin: "Greek Mythology", desc: "אלת החוכמה והאסטרטגיה הצבאית. נולדה בשריון מלא מראשו של זאוס.", meaning: "חדה, שבח" },
+      { name: "Boudica", nikud: "בּוּדִיקָה", origin: "Celtic Queen (60 AD)", desc: "הובילה מרד נגד האימפריה הרומית. שרפה את לונדון. מצאו את שכבת האפר.", meaning: "ניצחון" },
+      { name: "Hypatia", nikud: "הִיפָּאטְיָה", origin: "Ancient Alexandria", desc: "מתמטיקאית, אסטרונומית, פילוסופית. ההוגה הגדולה האחרונה של אלכסנדריה העתיקה.", meaning: "עליונה, גבוהה ביותר" },
+      { name: "Cleopatra", nikud: "קְלֵיאוֹפָּטְרָה", origin: "Egyptian Queen", desc: "דיברה 9 שפות. פיתתה את קיסר ואנטוניוס. מלכה על מצרים 21 שנה. קליאו בקיצור.", meaning: "תהילת האב" },
+      { name: "Valentina", nikud: "וָאלֶנְטִינָה", origin: "Valentina Tereshkova", desc: "האישה הראשונה בחלל. 1963. משימה סולו. כדור הארץ כחול והיא הוכיחה את זה.", meaning: "כוח, בריאות" },
+      { name: "Zenobia", nikud: "זֶנוֹבְּיָה", origin: "Queen of Palmyra (3rd century)", desc: "מלכה לוחמת שכבשה מצרים וחצי מהמזרח הרומי עד שרומא שלחה צבא שלם.", meaning: "חיי זאוס" },
+      { name: "Tomoe", nikud: "טוֹמוֹאֶה", origin: "Tomoe Gozen (12th century Japan)", desc: "לוחמת סמוראית שערפה ראשי גנרלים אויבים ורכבה ראשונה לקרב.", meaning: "ברכה, חברה יפה" },
+      { name: "Valkyrie", nikud: "וַאלְקִירִי", origin: "Norse Mythology", desc: "לוחמות אלוהיות שמחליטות מי חי ומי מת בקרב. בוחרות החללים.", meaning: "בוחרת החללים" },
+      { name: "Kira", nikud: "קִירָה", origin: "Multiple Cultures", desc: "שם שמופיע ברוסית, יפנית ואירית. מעורר אור וכוח.", meaning: "שליטה (רוסית), ניצוץ (יפנית)" },
+      { name: "Sappho", nikud: "סָאפּוֹ", origin: "Greek Poet (6th century BC)", desc: "המשוררת הלירית הגדולה ביותר של העת העתיקה. אפלטון קרא לה המוזה העשירית.", meaning: "ספיר" },
     ],
     boy: [
-      { name: "Leonidas", origin: "Sparta", desc: "King of the 300. Held Thermopylae. 'Then we will fight in the shade.' History's most legendary last stand.", meaning: "Lion-like" },
-      { name: "Orion", origin: "Greek Mythology", desc: "Giant hunter placed among the stars. The most recognizable constellation in the night sky.", meaning: "Rising in the sky" },
-      { name: "Atlas", origin: "Greek Mythology", desc: "Titan condemned to hold up the entire sky for eternity. Symbol of endurance.", meaning: "To carry, endure" },
-      { name: "Tesla", origin: "Nikola Tesla", desc: "Invented alternating current, radio, and the modern world. Died broke. Edison is still wrong.", meaning: "From Teslici, Serbia" },
-      { name: "Magnus", origin: "Multiple legends", desc: "Alexander Magnus, Magnus Carlsen, Magnus the Red. The name itself means greatness.", meaning: "Great" },
-      { name: "Cyrus", origin: "Cyrus the Great", desc: "Founded the largest empire the world had ever seen. Wrote the first declaration of human rights.", meaning: "Sun, throne" },
-      { name: "Odin", origin: "Norse Mythology", desc: "All-Father who sacrificed his eye for wisdom and hung from the World Tree to learn the runes.", meaning: "Frenzy, fury, inspiration" },
-      { name: "Thor", origin: "Norse Mythology", desc: "God of thunder who protects humanity with Mjolnir. Strongest of the Norse gods.", meaning: "Thunder" },
-      { name: "Ragnar", origin: "Ragnar Lothbrok", desc: "Legendary Viking king who raided Paris and whose sons conquered England.", meaning: "Warrior of judgment" },
-      { name: "Apollo", origin: "Greek Mythology", desc: "God of music, poetry, sun, healing, and prophecy. The most multifaceted Olympian.", meaning: "Destroyer, sun" },
-      { name: "Dante", origin: "Dante Alighieri", desc: "Wrote the Divine Comedy. Literally mapped Hell, Purgatory, and Heaven in poetry.", meaning: "Enduring, steadfast" },
-      { name: "Achilles", origin: "The Iliad", desc: "Greatest warrior of the Trojan War. Nearly invincible. Chose glory over a long life.", meaning: "Pain of the people" },
-      { name: "Hannibal", origin: "Hannibal Barca", desc: "Crossed the Alps with war elephants and brought Rome to its knees. Greatest military tactician ever.", meaning: "Grace of Baal" },
-      { name: "Galileo", origin: "Galileo Galilei", desc: "'And yet it moves.' Proved the Earth orbits the Sun. Told the church to sit down.", meaning: "From Galilee" },
-      { name: "Spartacus", origin: "Gladiator/Rebel", desc: "Led 70,000 slaves against Rome. The most legendary rebellion in history.", meaning: "From Sparta" },
+      { name: "Leonidas", nikud: "לֵיאוֹנִידָס", origin: "Sparta", desc: "מלך ה-300. החזיק את תרמופילאי. 'אז נילחם בצל.' העמידה האגדית ביותר בהיסטוריה.", meaning: "דמוי אריה" },
+      { name: "Orion", nikud: "אוֹרָיוֹן", origin: "Greek Mythology", desc: "ציד ענק שהוצב בין הכוכבים. הקבוצה הכי מוכרת בשמי הלילה.", meaning: "עולה בשמיים" },
+      { name: "Atlas", nikud: "אַטְלָס", origin: "Greek Mythology", desc: "טיטאן שנגזר עליו להחזיק את השמיים לנצח. סמל של סיבולת.", meaning: "לשאת, לסבול" },
+      { name: "Tesla", nikud: "טֶסְלָה", origin: "Nikola Tesla", desc: "המציא זרם חילופין, רדיו ואת העולם המודרני. מת עני. אדיסון עדיין טועה.", meaning: "מטסליצ׳י, סרביה" },
+      { name: "Magnus", nikud: "מָאגְנוּס", origin: "Multiple legends", desc: "אלכסנדר מגנוס, מגנוס קרלסן. השם עצמו אומר גדולה.", meaning: "גדול" },
+      { name: "Cyrus", nikud: "כּוֹרֶשׁ", origin: "Cyrus the Great", desc: "ייסד את האימפריה הגדולה ביותר שהעולם ראה. כתב את הצהרת זכויות האדם הראשונה.", meaning: "שמש, כס" },
+      { name: "Odin", nikud: "אוֹדִין", origin: "Norse Mythology", desc: "אבי הכל שהקריב את עינו למען חוכמה ותלה עצמו מעץ העולם כדי ללמוד את הרונות.", meaning: "זעם, השראה" },
+      { name: "Thor", nikud: "תוֹר", origin: "Norse Mythology", desc: "אל הרעם שמגן על האנושות עם מיולניר. הכי חזק מבין האלים הנורדיים.", meaning: "רעם" },
+      { name: "Ragnar", nikud: "רָאגְנָאר", origin: "Ragnar Lothbrok", desc: "מלך ויקינגי אגדי שפשט על פריז ושבניו כבשו את אנגליה.", meaning: "לוחם המשפט" },
+      { name: "Apollo", nikud: "אָפּוֹלוֹ", origin: "Greek Mythology", desc: "אל המוזיקה, השירה, השמש, הריפוי והנבואה. האולימפי הכי רב-תחומי.", meaning: "משחית, שמש" },
+      { name: "Dante", nikud: "דָּאנְטֶה", origin: "Dante Alighieri", desc: "כתב את הקומדיה האלוהית. ממש מיפה את הגיהינום, הפורגטוריו והגן עדן.", meaning: "עמיד, יציב" },
+      { name: "Achilles", nikud: "אָכִילֶס", origin: "The Iliad", desc: "הלוחם הגדול ביותר במלחמת טרויה. כמעט בלתי מנוצח. בחר בתהילה על חיים ארוכים.", meaning: "כאב העם" },
+      { name: "Hannibal", nikud: "חָנִיבָּעַל", origin: "Hannibal Barca", desc: "חצה את האלפים עם פילי מלחמה והביא את רומא לברכיה.", meaning: "חסד בעל" },
+      { name: "Galileo", nikud: "גָּלִילֵאוֹ", origin: "Galileo Galilei", desc: "'ובכל זאת היא נעה.' הוכיח שכדור הארץ סובב את השמש. אמר לכנסייה לשבת.", meaning: "מהגליל" },
+      { name: "Spartacus", nikud: "סְפָּארְטָאקוּס", origin: "Gladiator/Rebel", desc: "הוביל 70,000 עבדים נגד רומא. המרד האגדי ביותר בהיסטוריה.", meaning: "מספרטה" },
     ]
   }
 };
@@ -539,6 +601,41 @@ function init() {
   createStars();
   renderCategories();
   renderFavorites();
+  renderProfileScreen();
+  if (!currentProfile) {
+    document.getElementById('profile-screen').classList.remove('hidden');
+  } else {
+    document.getElementById('profile-screen').classList.add('hidden');
+    updateProfileBadge();
+  }
+}
+
+function renderProfileScreen() {
+  const grid = document.getElementById('profile-grid');
+  grid.innerHTML = '';
+  profiles.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'profile-btn';
+    btn.textContent = p;
+    btn.onclick = () => selectProfile(p);
+    grid.appendChild(btn);
+  });
+}
+
+function selectProfile(name) {
+  currentProfile = name;
+  localStorage.setItem('loyfer-profile', name);
+  document.getElementById('profile-screen').classList.add('hidden');
+  updateProfileBadge();
+}
+
+function showProfileScreen() {
+  document.getElementById('profile-screen').classList.remove('hidden');
+}
+
+function updateProfileBadge() {
+  const badge = document.getElementById('current-profile');
+  badge.textContent = currentProfile + ' \u270B';
 }
 
 function createStars() {
@@ -651,6 +748,7 @@ function generateName() {
   setTimeout(() => {
     document.getElementById('result-category').textContent = pick.category;
     document.getElementById('result-name').textContent = pick.name.toUpperCase();
+    document.getElementById('result-nikud').textContent = pick.nikud || '';
     document.getElementById('result-origin').textContent = pick.origin;
     document.getElementById('result-desc').textContent = pick.desc;
     document.getElementById('result-meaning').textContent = pick.meaning ? 'משמעות: ' + pick.meaning : '';
@@ -659,18 +757,30 @@ function generateName() {
 }
 
 function addFavorite() {
-  if (!currentName) return;
-  const entry = { name: currentName.name, gender, category: currentName.category };
-  if (!favorites.find(f => f.name === entry.name && f.gender === entry.gender)) {
-    favorites.push(entry);
-    localStorage.setItem('loyfer-favorites', JSON.stringify(favorites));
-    renderFavorites();
+  if (!currentName || !currentProfile) return;
+  const key = currentName.name + '-' + gender;
+  let existing = favorites.find(f => f.key === key);
+  if (existing) {
+    if (!existing.voters.includes(currentProfile)) {
+      existing.voters.push(currentProfile);
+    }
+  } else {
+    favorites.push({ key, name: currentName.name, gender, category: currentName.category, voters: [currentProfile] });
   }
+  localStorage.setItem('loyfer-favorites-v2', JSON.stringify(favorites));
+  renderFavorites();
 }
 
-function removeFavorite(name, g) {
-  favorites = favorites.filter(f => !(f.name === name && f.gender === g));
-  localStorage.setItem('loyfer-favorites', JSON.stringify(favorites));
+function removeVote(key) {
+  if (!currentProfile) return;
+  let entry = favorites.find(f => f.key === key);
+  if (entry) {
+    entry.voters = entry.voters.filter(v => v !== currentProfile);
+    if (entry.voters.length === 0) {
+      favorites = favorites.filter(f => f.key !== key);
+    }
+  }
+  localStorage.setItem('loyfer-favorites-v2', JSON.stringify(favorites));
   renderFavorites();
 }
 
@@ -680,12 +790,21 @@ function renderFavorites() {
   if (favorites.length === 0) { section.style.display = 'none'; return; }
   section.style.display = 'block';
   list.innerHTML = '';
-  favorites.forEach(f => {
+  // Sort by most votes first
+  const sorted = [...favorites].sort((a, b) => b.voters.length - a.voters.length);
+  sorted.forEach(f => {
     const chip = document.createElement('span');
     chip.className = 'fav-chip';
-    chip.textContent = (f.gender === 'girl' ? '\u2640 ' : '\u2642 ') + f.name + ' Loyfer';
-    chip.title = 'Click to remove';
-    chip.onclick = () => removeFavorite(f.name, f.gender);
+    const icon = f.gender === 'girl' ? '\u2640' : '\u2642';
+    const nameEl = document.createElement('span');
+    nameEl.textContent = icon + ' ' + f.name + ' Loyfer';
+    const votersEl = document.createElement('span');
+    votersEl.className = 'fav-voters';
+    votersEl.textContent = f.voters.join(' \u2022 ');
+    chip.appendChild(nameEl);
+    chip.appendChild(votersEl);
+    chip.title = 'לחץ כדי להסיר את ההצבעה שלך';
+    chip.onclick = () => removeVote(f.key);
     list.appendChild(chip);
   });
 }
