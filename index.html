@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baby Loyfer - מחולל שמות לתינוק</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background 0.8s ease;
+  }
+
+  body.girl-mode {
+    background: linear-gradient(135deg, #1a0a1e 0%, #2d1233 30%, #1e0a2e 60%, #120818 100%);
+  }
+  body.boy-mode {
+    background: linear-gradient(135deg, #0a1a1e 0%, #122d33 30%, #0a1e2e 60%, #081218 100%);
+  }
+
+  .stars {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
+  }
+  .star {
+    position: absolute; border-radius: 50%; background: white;
+    animation: twinkle var(--dur) ease-in-out infinite alternate;
+  }
+  @keyframes twinkle { 0% { opacity: 0.1; } 100% { opacity: var(--max-o); } }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 600px; margin: 0 auto; padding: 40px 20px;
+    text-align: center;
+  }
+
+  .header-badge {
+    display: inline-block; padding: 6px 20px; border-radius: 50px;
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    margin-bottom: 16px; font-weight: 500;
+    transition: all 0.5s ease;
+  }
+  .girl-mode .header-badge { background: rgba(236,72,153,0.15); color: #f9a8d4; border: 1px solid rgba(236,72,153,0.3); }
+  .boy-mode .header-badge { background: rgba(56,189,248,0.15); color: #7dd3fc; border: 1px solid rgba(56,189,248,0.3); }
+
+  h1 {
+    font-family: 'Playfair Display', serif; font-weight: 900;
+    font-size: 42px; line-height: 1.1; margin-bottom: 8px;
+    transition: color 0.5s ease;
+  }
+  .girl-mode h1 { color: #fce7f3; }
+  .boy-mode h1 { color: #e0f2fe; }
+
+  .subtitle {
+    font-size: 15px; font-weight: 300; margin-bottom: 36px;
+    transition: color 0.5s ease;
+  }
+  .girl-mode .subtitle { color: #d8b4d8; }
+  .boy-mode .subtitle { color: #94d8e8; }
+
+  .eve-note {
+    font-size: 13px; font-style: italic; margin-bottom: 30px;
+    padding: 12px 20px; border-radius: 12px;
+    transition: all 0.5s ease;
+  }
+  .girl-mode .eve-note { color: #f9a8d4; background: rgba(236,72,153,0.08); }
+  .boy-mode .eve-note { color: #7dd3fc; background: rgba(56,189,248,0.08); }
+
+  /* GENDER TOGGLE */
+  .toggle-section { margin-bottom: 30px; }
+  .toggle-label { font-size: 13px; letter-spacing: 1px; text-transform: uppercase; font-weight: 500; }
+  .girl-mode .toggle-label { color: #d8b4d8; }
+  .boy-mode .toggle-label { color: #94d8e8; }
+
+  .toggle-wrapper {
+    display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 10px;
+  }
+  .toggle-option {
+    font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s;
+    padding: 4px 0;
+  }
+  .toggle-option.active-girl { color: #ec4899; text-shadow: 0 0 20px rgba(236,72,153,0.5); }
+  .toggle-option.active-boy { color: #38bdf8; text-shadow: 0 0 20px rgba(56,189,248,0.5); }
+  .toggle-option.inactive { color: #555; }
+
+  .toggle-track {
+    width: 64px; height: 32px; border-radius: 16px; cursor: pointer;
+    position: relative; transition: background 0.4s ease;
+  }
+  .girl-mode .toggle-track { background: linear-gradient(135deg, #ec4899, #a855f7); }
+  .boy-mode .toggle-track { background: linear-gradient(135deg, #38bdf8, #6366f1); }
+
+  .toggle-thumb {
+    width: 26px; height: 26px; border-radius: 50%; background: white;
+    position: absolute; top: 3px; transition: left 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .girl-mode .toggle-thumb { right: 35px; left: auto; }
+  .boy-mode .toggle-thumb { right: 3px; left: auto; }
+
+  /* CATEGORY SELECT */
+  .category-section { margin-bottom: 30px; }
+  .category-label {
+    font-size: 12px; letter-spacing: 1px; text-transform: uppercase;
+    font-weight: 500; margin-bottom: 10px;
+  }
+  .girl-mode .category-label { color: #d8b4d8; }
+  .boy-mode .category-label { color: #94d8e8; }
+
+  .category-grid {
+    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  }
+  .cat-btn {
+    padding: 8px 16px; border-radius: 20px; border: 1px solid;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: all 0.3s ease; background: transparent;
+    font-family: 'Inter', sans-serif;
+  }
+  .girl-mode .cat-btn { color: #d8b4d8; border-color: rgba(236,72,153,0.25); }
+  .girl-mode .cat-btn:hover { background: rgba(236,72,153,0.15); border-color: #ec4899; }
+  .girl-mode .cat-btn.active { background: rgba(236,72,153,0.25); border-color: #ec4899; color: #f9a8d4; }
+  .boy-mode .cat-btn { color: #94d8e8; border-color: rgba(56,189,248,0.25); }
+  .boy-mode .cat-btn:hover { background: rgba(56,189,248,0.15); border-color: #38bdf8; }
+  .boy-mode .cat-btn.active { background: rgba(56,189,248,0.25); border-color: #38bdf8; color: #7dd3fc; }
+
+  /* CUSTOM TOPIC */
+  .custom-topic {
+    margin-top: 12px; display: flex; gap: 8px; justify-content: center;
+  }
+  .custom-input {
+    padding: 8px 16px; border-radius: 20px; border: 1px solid;
+    font-size: 13px; font-family: 'Inter', sans-serif;
+    background: rgba(255,255,255,0.05); outline: none; width: 200px;
+  }
+  .girl-mode .custom-input { color: #f9a8d4; border-color: rgba(236,72,153,0.3); }
+  .boy-mode .custom-input { color: #7dd3fc; border-color: rgba(56,189,248,0.3); }
+  .custom-input::placeholder { opacity: 0.4; }
+  .add-btn {
+    padding: 8px 16px; border-radius: 20px; border: none;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: 'Inter', sans-serif;
+  }
+  .girl-mode .add-btn { background: #ec4899; color: white; }
+  .boy-mode .add-btn { background: #38bdf8; color: #0a1a1e; }
+
+  /* GENERATE BUTTON */
+  .generate-btn {
+    padding: 18px 50px; border-radius: 50px; border: none;
+    font-size: 18px; font-weight: 700; cursor: pointer;
+    font-family: 'Playfair Display', serif; letter-spacing: 1px;
+    transition: all 0.3s ease; margin-bottom: 40px;
+    position: relative; overflow: hidden;
+  }
+  .girl-mode .generate-btn {
+    background: linear-gradient(135deg, #ec4899, #a855f7);
+    color: white; box-shadow: 0 4px 30px rgba(236,72,153,0.4);
+  }
+  .girl-mode .generate-btn:hover { transform: scale(1.05); box-shadow: 0 6px 40px rgba(236,72,153,0.6); }
+  .boy-mode .generate-btn {
+    background: linear-gradient(135deg, #38bdf8, #6366f1);
+    color: white; box-shadow: 0 4px 30px rgba(56,189,248,0.4);
+  }
+  .boy-mode .generate-btn:hover { transform: scale(1.05); box-shadow: 0 6px 40px rgba(56,189,248,0.6); }
+  .generate-btn:active { transform: scale(0.98); }
+
+  /* RESULT CARD */
+  .result-card {
+    padding: 40px 30px; border-radius: 24px; margin-bottom: 30px;
+    transition: all 0.5s ease; position: relative; overflow: hidden;
+    display: none;
+  }
+  .result-card.visible { display: block; animation: cardReveal 0.6s ease forwards; }
+  @keyframes cardReveal {
+    0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .girl-mode .result-card { background: rgba(236,72,153,0.08); border: 1px solid rgba(236,72,153,0.2); }
+  .boy-mode .result-card { background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.2); }
+
+  .result-category {
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    font-weight: 500; margin-bottom: 8px;
+  }
+  .girl-mode .result-category { color: #ec4899; }
+  .boy-mode .result-category { color: #38bdf8; }
+
+  .result-name {
+    font-family: 'Playfair Display', serif; font-weight: 900;
+    font-size: 52px; line-height: 1.1; margin-bottom: 4px;
+    transition: color 0.5s;
+  }
+  .girl-mode .result-name { color: #fce7f3; }
+  .boy-mode .result-name { color: #e0f2fe; }
+
+  .result-surname {
+    font-family: 'Playfair Display', serif; font-weight: 400;
+    font-size: 28px; letter-spacing: 4px; margin-bottom: 16px;
+  }
+  .girl-mode .result-surname { color: #d8b4d8; }
+  .boy-mode .result-surname { color: #94d8e8; }
+
+  .result-origin {
+    font-size: 14px; font-weight: 500; margin-bottom: 8px;
+  }
+  .girl-mode .result-origin { color: #f9a8d4; }
+  .boy-mode .result-origin { color: #7dd3fc; }
+
+  .result-desc {
+    font-size: 14px; font-weight: 300; line-height: 1.6; margin-bottom: 12px;
+  }
+  .girl-mode .result-desc { color: #c9a0c9; }
+  .boy-mode .result-desc { color: #80c4d4; }
+
+  .result-meaning {
+    font-size: 13px; font-style: italic; padding: 10px 16px;
+    border-radius: 10px; display: inline-block;
+  }
+  .girl-mode .result-meaning { color: #f9a8d4; background: rgba(236,72,153,0.1); }
+  .boy-mode .result-meaning { color: #7dd3fc; background: rgba(56,189,248,0.1); }
+
+  /* FAVORITES */
+  .fav-btn {
+    margin-top: 16px; padding: 10px 24px; border-radius: 50px;
+    border: 1px solid; font-size: 14px; cursor: pointer;
+    background: transparent; font-family: 'Inter', sans-serif;
+    font-weight: 500; transition: all 0.3s;
+  }
+  .girl-mode .fav-btn { color: #f9a8d4; border-color: rgba(236,72,153,0.4); }
+  .girl-mode .fav-btn:hover { background: rgba(236,72,153,0.2); }
+  .boy-mode .fav-btn { color: #7dd3fc; border-color: rgba(56,189,248,0.4); }
+  .boy-mode .fav-btn:hover { background: rgba(56,189,248,0.2); }
+
+  .favorites-section { margin-top: 20px; }
+  .favorites-title {
+    font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+    font-weight: 500; margin-bottom: 12px;
+  }
+  .girl-mode .favorites-title { color: #d8b4d8; }
+  .boy-mode .favorites-title { color: #94d8e8; }
+
+  .fav-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .fav-chip {
+    padding: 6px 14px; border-radius: 20px; font-size: 13px;
+    font-weight: 500; cursor: pointer; transition: all 0.3s;
+  }
+  .girl-mode .fav-chip { background: rgba(236,72,153,0.15); color: #f9a8d4; border: 1px solid rgba(236,72,153,0.3); }
+  .boy-mode .fav-chip { background: rgba(56,189,248,0.15); color: #7dd3fc; border: 1px solid rgba(56,189,248,0.3); }
+  .fav-chip:hover { opacity: 0.7; }
+
+  .footer {
+    margin-top: 40px; font-size: 12px; font-weight: 300;
+  }
+  .girl-mode .footer { color: #6b4570; }
+  .boy-mode .footer { color: #3a6070; }
+</style>
+</head>
+<body class="girl-mode">
+
+<div class="stars" id="stars"></div>
+
+<div class="container">
+  <div class="header-badge">Loyfer Family Expansion Pack</div>
+  <h1>איך נקרא<br>לבייבי לויפר?</h1>
+  <p class="subtitle">כי "יובל" אף פעם לא היה אופציה</p>
+  <p class="eve-note">לאיב ואורן. מיקאסה עומדת להפוך לאחות גדולה.</p>
+
+  <div class="toggle-section">
+    <div class="toggle-label">...אנחנו מחפשים שם ל</div>
+    <div class="toggle-wrapper">
+      <span class="toggle-option active-girl" id="opt-girl" onclick="setGender('girl')">בת</span>
+      <div class="toggle-track" id="toggle-track" onclick="toggleGender()">
+        <div class="toggle-thumb" id="toggle-thumb"></div>
+      </div>
+      <span class="toggle-option inactive" id="opt-boy" onclick="setGender('boy')">בן</span>
+    </div>
+  </div>
+
+  <div class="category-section">
+    <div class="category-label">בחרו יקום</div>
+    <div class="category-grid" id="category-grid"></div>
+    <div class="custom-topic">
+      <input type="text" class="custom-input" id="custom-input" placeholder="...הוסיפו נושא משלכם" dir="rtl">
+      <button class="add-btn" onclick="addCustomTopic()">+ הוסף</button>
+    </div>
+  </div>
+
+  <button class="generate-btn" onclick="generateName()">גלו שם!</button>
+
+  <div class="result-card" id="result-card">
+    <div class="result-category" id="result-category"></div>
+    <div class="result-name" id="result-name"></div>
+    <div class="result-surname">LOYFER</div>
+    <div class="result-origin" id="result-origin"></div>
+    <div class="result-desc" id="result-desc"></div>
+    <div class="result-meaning" id="result-meaning"></div>
+    <br>
+    <button class="fav-btn" onclick="addFavorite()">שמור למועדפים</button>
+  </div>
+
+  <div class="favorites-section" id="favorites-section" style="display:none">
+    <div class="favorites-title">המועדפים שלנו</div>
+    <div class="fav-list" id="fav-list"></div>
+  </div>
+
+  <div class="footer">
+    נוצר באהבה עבור האמא הכי יפה בישראל<br>
+    מיקאסה לויפר אישרה את ההודעה הזו
+  </div>
+</div>
+
+<script>
+let gender = 'girl';
+let activeCategories = new Set(['All']);
+let favorites = JSON.parse(localStorage.getItem('loyfer-favorites') || '[]');
+let currentName = null;
+let usedNames = new Set();
+
+const nameBank = {
+  "One Piece": {
+    girl: [
+      { name: "Nami", origin: "One Piece", desc: "The brilliant navigator who charts the course for the Straw Hat Pirates. Survived hell, chose freedom, and outsmarted everyone.", meaning: "Wave in Japanese" },
+      { name: "Robin", origin: "One Piece", desc: "Nico Robin. The last survivor of Ohara, archaeologist who can read the ancient language. Strongest will on the crew.", meaning: "Bright fame" },
+      { name: "Vivi", origin: "One Piece", desc: "Princess Nefertari Vivi. Left her throne to fight alongside pirates and save her kingdom. Royalty with guts.", meaning: "Life, alive" },
+      { name: "Uta", origin: "One Piece Film: Red", desc: "The world's greatest diva with a voice that transcends dimensions. Shanks' daughter.", meaning: "Song in Japanese" },
+      { name: "Reiju", origin: "One Piece", desc: "Vinsmoke Reiju, the Poison Pink. Only sibling with a soul. Genetically enhanced warrior princess.", meaning: "Zero, Two (0, 2) in Japanese" },
+      { name: "Hiyori", origin: "One Piece", desc: "Kozuki Hiyori, princess of Wano. Survived 20 years in disguise waiting to reclaim her homeland.", meaning: "Good day, sunshine" },
+      { name: "Koala", origin: "One Piece", desc: "Former slave turned Revolutionary Army commander. Fights to free the world from the Celestial Dragons.", meaning: "Resilience personified" },
+      { name: "Bonney", origin: "One Piece", desc: "Jewelry Bonney. Supernova pirate captain who can manipulate age itself. Pure chaos energy.", meaning: "Named after real pirate Anne Bonny" },
+      { name: "Toki", origin: "One Piece", desc: "Kozuki Toki. Time-traveling woman who sent the samurai 20 years forward to save Wano.", meaning: "Time in Japanese" },
+      { name: "Hina", origin: "One Piece", desc: "Captain Hina. Marine captain with iron-cage powers. Walks through enemies and they're instantly imprisoned.", meaning: "Sun, sunshine in Japanese" },
+      { name: "Perona", origin: "One Piece", desc: "Gothic ghost princess whose hollow powers make enemies lose all will to fight.", meaning: "Possibly from Persephone" },
+    ],
+    boy: [
+      { name: "Zoro", origin: "One Piece", desc: "Roronoa Zoro. Three-sword style. Gets lost everywhere but never loses a fight that matters. Unbreakable loyalty.", meaning: "Inspired by real pirate Fran\u00e7ois l'Olonnais" },
+      { name: "Ace", origin: "One Piece", desc: "Portgas D. Ace. Fire Fist. Lived free, died protecting his brother. The most beloved character in the series.", meaning: "Unity, the best" },
+      { name: "Sanji", origin: "One Piece", desc: "Black Leg Sanji. World-class chef who fights only with kicks to protect his hands for cooking. Chivalry incarnate.", meaning: "Three, Two (3, 2) in Japanese" },
+      { name: "Sabo", origin: "One Piece", desc: "Chief of Staff of the Revolutionary Army. Ace's sworn brother. Inherited the Flame-Flame Fruit. Called the Flame Emperor.", meaning: "Sharp and strong" },
+      { name: "Shanks", origin: "One Piece", desc: "Red-Haired Shanks. One of the Four Emperors. Stopped a war with sheer presence. Bet his arm on the next generation.", meaning: "The coolest pirate name ever" },
+      { name: "Marco", origin: "One Piece", desc: "Marco the Phoenix. Whitebeard's right hand. Can regenerate from any wound with blue flames.", meaning: "Warlike, dedicated to Mars" },
+      { name: "Law", origin: "One Piece", desc: "Trafalgar D. Water Law. Surgeon of Death. Can literally cut and rearrange anything in his room.", meaning: "Justice, rule" },
+      { name: "Oden", origin: "One Piece", desc: "Kozuki Oden. Wouldn't die. Held his retainers above boiling oil for an hour. Legend of Wano.", meaning: "The character made this name legendary" },
+      { name: "Mihawk", origin: "One Piece", desc: "World's greatest swordsman who slices icebergs with a casual swing. Hawk eyes that see everything.", meaning: "Hawk \u2014 evokes precision" },
+    ]
+  },
+  "Attack on Titan": {
+    girl: [
+      { name: "Sasha", origin: "Attack on Titan", desc: "Sharpshooter with heart. Saved a child from a Titan with nothing but courage and a bow. Potato girl forever.", meaning: "Defender of mankind" },
+      { name: "Historia", origin: "Attack on Titan", desc: "Secret queen who rejected her puppet role and chose to live for herself \u2014 then saved everyone anyway.", meaning: "History, story" },
+      { name: "Ymir", origin: "Attack on Titan", desc: "First Titan. A slave girl who gained godlike power and waited 2,000 years for freedom.", meaning: "Norse primordial giant from whom the world was made" },
+      { name: "Annie", origin: "Attack on Titan", desc: "The Female Titan. A fighting prodigy who crystallized herself rather than be captured.", meaning: "Grace" },
+      { name: "Hange", origin: "Attack on Titan", desc: "Brilliant mad scientist commander who understood Titans better than anyone alive.", meaning: "Unique to the series" },
+      { name: "Frieda", origin: "Attack on Titan", desc: "Previous holder of the Founding Titan. Tragic queen with unimaginable power she refused to use.", meaning: "Peaceful ruler" },
+      { name: "Pieck", origin: "Attack on Titan", desc: "Cart Titan. The most intelligent warrior who outsmarts everyone from all fours.", meaning: "Peak" },
+      { name: "Kiyomi", origin: "Attack on Titan", desc: "Ambassador from the Eastern nation. Elegant diplomat in a world of war.", meaning: "Pure beauty in Japanese" },
+    ],
+    boy: [
+      { name: "Eren", origin: "Attack on Titan", desc: "The boy who kept moving forward. Started as freedom-seeking hero, became the most complex antagonist in anime history.", meaning: "Saint, holy one (Turkish)" },
+      { name: "Levi", origin: "Attack on Titan", desc: "Captain Levi Ackerman. Humanity's strongest soldier. Mikasa's relative. Cuts Titans like paper with zero wasted movement.", meaning: "Joined, attached (Hebrew)" },
+      { name: "Erwin", origin: "Attack on Titan", desc: "Commander who led a suicide charge and inspired soldiers to die willingly for truth. SHINZOU WO SASAGEYO.", meaning: "Army friend, true friend" },
+      { name: "Armin", origin: "Attack on Titan", desc: "Weakest physically, smartest strategically. Became the Colossal Titan and the voice of peace.", meaning: "Soldier, warrior" },
+      { name: "Falco", origin: "Attack on Titan", desc: "Pure-hearted boy who became the flying Jaw Titan. Literally evolved wings.", meaning: "Falcon" },
+      { name: "Zeke", origin: "Attack on Titan", desc: "Beast Titan who threw rocks like artillery. Mastermind with a terrifying plan for the world.", meaning: "God remembers (Hebrew)" },
+      { name: "Reiner", origin: "Attack on Titan", desc: "The Armored Titan. Most psychologically complex character, torn between two worlds.", meaning: "Advising warrior" },
+      { name: "Colt", origin: "Attack on Titan", desc: "Warrior candidate who chose to die embracing his brother rather than run to safety.", meaning: "Young horse" },
+    ]
+  },
+  "Popular Anime": {
+    girl: [
+      { name: "Hinata", origin: "Naruto", desc: "Hyuga Hinata. The shy girl who stood up to Pain alone to protect the person she loved. Quiet strength.", meaning: "Sunny place, toward the sun" },
+      { name: "Nezuko", origin: "Demon Slayer", desc: "Fought her demon nature through pure love for her brother. The only demon who protects humans.", meaning: "Snowball flower" },
+      { name: "Violet", origin: "Violet Evergarden", desc: "A former weapon of war who learned what 'I love you' means by writing letters for others.", meaning: "Purple flower" },
+      { name: "Erza", origin: "Fairy Tail", desc: "Erza Scarlet. Titania, Queen of the Fairies. Escaped slavery, became the strongest mage in the guild.", meaning: "Derived from Ezra, meaning help" },
+      { name: "Maki", origin: "Jujutsu Kaisen", desc: "Zenin Maki. Born with zero cursed energy in a sorcerer family. Became the strongest through pure skill and rage.", meaning: "True, precious" },
+      { name: "Nobara", origin: "Jujutsu Kaisen", desc: "Kugisaki Nobara. Fights with a hammer and nails. Unapologetically herself. 'I am Kugisaki Nobara!'", meaning: "Wild rose" },
+      { name: "Yor", origin: "Spy x Family", desc: "Yor Forger. Assassin by night, loving mother by day. The most dangerous and adorable woman alive.", meaning: "Thorn Princess" },
+      { name: "Anya", origin: "Spy x Family", desc: "Telepathic child prodigy who secretly holds a spy family together with her mind-reading. Waku waku!", meaning: "Grace, favor" },
+      { name: "Riza", origin: "Fullmetal Alchemist", desc: "Riza Hawkeye. Deadliest sniper in the military who keeps the future leader morally grounded.", meaning: "Devoted, harvester" },
+      { name: "Rukia", origin: "Bleach", desc: "Kuchiki Rukia. From street orphan to captain of the 13th Division. Masters the most beautiful ice Bankai.", meaning: "Light, radiance" },
+      { name: "Chihiro", origin: "Spirited Away", desc: "A 10-year-old who saved her parents and navigated a spirit world through courage and kindness.", meaning: "A thousand fathoms, profound" },
+      { name: "Shinobu", origin: "Demon Slayer", desc: "Insect Hashira. Tiny, elegant, and lethal with poison-laced swordsmanship.", meaning: "Endurance, stealth" },
+      { name: "Rei", origin: "Neon Genesis Evangelion", desc: "Mysterious pilot whose quiet exterior hides a cosmic-level secret identity.", meaning: "Spirit, soul, zero" },
+      { name: "Asuka", origin: "Neon Genesis Evangelion", desc: "Fiery prodigy Eva pilot with unbreakable pride who fights Angels with raw fury.", meaning: "Tomorrow's fragrance, flying bird" },
+      { name: "Faye", origin: "Cowboy Bebop", desc: "Faye Valentine. Cryogenically frozen bounty hunter from the past with razor-sharp survival instincts.", meaning: "Fairy, loyalty" },
+      { name: "Winry", origin: "Fullmetal Alchemist", desc: "Automail engineer genius who builds prosthetic limbs that let the hero fight gods.", meaning: "Unique creation" },
+      { name: "Kiki", origin: "Kiki's Delivery Service", desc: "Young witch who builds an independent life through determination and flying talent.", meaning: "Double joy" },
+      { name: "Nausicaa", origin: "Nausicaa of the Valley of the Wind", desc: "Warrior princess who flies into toxic jungles to save humanity and understands nature's truth.", meaning: "Sea nymph princess (Homer's Odyssey)" },
+    ],
+    boy: [
+      { name: "Gojo", origin: "Jujutsu Kaisen", desc: "Gojo Satoru. The strongest sorcerer alive. Six Eyes + Infinity = untouchable. Also hilarious.", meaning: "Limitless" },
+      { name: "Toji", origin: "Jujutsu Kaisen", desc: "Born with zero cursed energy, killed the strongest sorcerers with pure physical ability alone.", meaning: "Rich, fertile land" },
+      { name: "Itachi", origin: "Naruto", desc: "Uchiha Itachi. Sacrificed everything including his reputation to protect his village and his brother.", meaning: "Weasel \u2014 but the character transcended it" },
+      { name: "Minato", origin: "Naruto", desc: "The Yellow Flash. Fastest ninja alive who sealed a demon fox inside his own newborn son to save the village.", meaning: "Harbor, port" },
+      { name: "Spike", origin: "Cowboy Bebop", desc: "Spike Spiegel. Bounty hunter, martial artist, philosopher. The coolest anime character ever drawn.", meaning: "Long, heavy nail" },
+      { name: "Gon", origin: "Hunter x Hunter", desc: "Gon Freecss. Pure-hearted kid with terrifying potential. Would walk through hell for his friends.", meaning: "Derived from good" },
+      { name: "Killua", origin: "Hunter x Hunter", desc: "Zoldyck Killua. Born assassin who chose friendship over his family's darkness. Lightning speed.", meaning: "Lightning incarnate" },
+      { name: "Thorfinn", origin: "Vinland Saga", desc: "From revenge-driven warrior to pacifist explorer. The greatest character arc in anime.", meaning: "Thor's bold voyager" },
+      { name: "Tanjiro", origin: "Demon Slayer", desc: "Kamado Tanjiro. The kindest demon slayer. Fights monsters with empathy. Set your heart ablaze.", meaning: "Charcoal son" },
+      { name: "Rengoku", origin: "Demon Slayer", desc: "Flame Hashira who smiled while dying and told everyone to set their hearts ablaze.", meaning: "Purgatory" },
+      { name: "Mugen", origin: "Samurai Champloo", desc: "Wild, unpredictable, break-dance swordsman. Freedom personified.", meaning: "Infinity" },
+      { name: "Roy", origin: "Fullmetal Alchemist", desc: "Roy Mustang. Flame Alchemist who snaps his fingers and incinerates everything. Chasing the top to fix a nation.", meaning: "King" },
+      { name: "Canute", origin: "Vinland Saga", desc: "Timid prince who transforms into a ruthless king chasing the concept of love through power.", meaning: "Knot (Norse) \u2014 refers to King Canute the Great" },
+    ]
+  },
+  "Game of Thrones": {
+    girl: [
+      { name: "Arya", origin: "Game of Thrones", desc: "A girl has a name. Trained with the Faceless Men, crossed names off her list, sailed west of Westeros.", meaning: "Noble, truthful in Sanskrit" },
+      { name: "Lyanna", origin: "Game of Thrones", desc: "Lyanna Mormont. The 10-year-old Lady of Bear Island who shamed grown lords and killed a giant.", meaning: "Graceful, soft" },
+      { name: "Ygritte", origin: "Game of Thrones", desc: "Kissed by fire. Free folk spearwife who taught Jon Snow everything. 'You know nothing.'", meaning: "Evokes grit" },
+      { name: "Meera", origin: "Game of Thrones", desc: "Meera Reed. Dragged Bran across the frozen North, fought White Walkers, never gave up.", meaning: "Ocean, boundary" },
+      { name: "Nymeria", origin: "Game of Thrones", desc: "Arya's direwolf, named after the warrior queen who led 10,000 ships to found Dorne.", meaning: "Warrior queen of the Rhoynar" },
+      { name: "Brienne", origin: "Game of Thrones", desc: "Brienne of Tarth. Defeated the Hound, knighted by Jaime. The truest knight in Westeros.", meaning: "Noble, strong" },
+      { name: "Olenna", origin: "Game of Thrones", desc: "The Queen of Thorns. 'Tell Cersei. I want her to know it was me.' Most savage exit ever.", meaning: "Shining light" },
+      { name: "Sansa", origin: "Game of Thrones", desc: "Started naive, ended as Queen in the North. Survived Joffrey, Ramsay, and Littlefinger.", meaning: "Praise, charm" },
+      { name: "Margaery", origin: "Game of Thrones", desc: "Political genius who played the game better than almost everyone in King's Landing.", meaning: "Pearl" },
+      { name: "Daenerys", origin: "Game of Thrones", desc: "Mother of Dragons. Walked into fire, freed slaves, conquered with three dragons. Dany Loyfer as nickname.", meaning: "Invented by GRRM" },
+    ],
+    boy: [
+      { name: "Robb", origin: "Game of Thrones", desc: "The Young Wolf. Never lost a battle. King in the North at 16.", meaning: "Bright fame" },
+      { name: "Tyrion", origin: "Game of Thrones", desc: "The Imp. Smartest person in Westeros. 'I drink and I know things.'", meaning: "Derived from Tyr, Norse god of war" },
+      { name: "Oberyn", origin: "Game of Thrones", desc: "The Red Viper of Dorne. Poisoner, warrior, lover, scholar. The most charismatic character on the show.", meaning: "Noble bear" },
+      { name: "Gendry", origin: "Game of Thrones", desc: "Robert's bastard turned Lord of Storm's End. Forged weapons from dragonglass to fight the dead.", meaning: "Derived from Gentry, noble born" },
+      { name: "Tormund", origin: "Game of Thrones", desc: "Giantsbane. Drank giant's milk. 'I've always had blue eyes!' Peak energy.", meaning: "Thor's protection" },
+      { name: "Daemon", origin: "House of the Dragon", desc: "Rogue prince, dragonrider, the most dangerous Targaryen who ever lived.", meaning: "Spirit, divine power (Greek)" },
+      { name: "Drogo", origin: "Game of Thrones", desc: "Khal Drogo. Undefeated Dothraki warrior king. 'Moon of my life.'", meaning: "Precious, dear" },
+      { name: "Jaime", origin: "Game of Thrones", desc: "The Kingslayer who became one of the most complex redemption arcs in television.", meaning: "Supplanter" },
+      { name: "Theon", origin: "Game of Thrones", desc: "Broken by Ramsay, rebuilt himself, charged at the Night King. Died with his name restored.", meaning: "God (Greek)" },
+      { name: "Davos", origin: "Game of Thrones", desc: "Smuggler turned Hand of the King. Most honest and loyal man in Westeros.", meaning: "Beloved" },
+      { name: "Aegon", origin: "House of the Dragon", desc: "The Conqueror who united Westeros with three dragons. Jon Snow's true name.", meaning: "Sounds like aeon" },
+    ]
+  },
+  "Nintendo": {
+    girl: [
+      { name: "Zelda", origin: "The Legend of Zelda", desc: "Princess Zelda. Wisdom incarnate. Fights alongside Link across every timeline. Gaming royalty.", meaning: "Gray fighting maid (Germanic)" },
+      { name: "Samus", origin: "Metroid", desc: "Samus Aran. Raised by aliens, hunts space pirates solo. The original gaming badass.", meaning: "Created name, unique" },
+      { name: "Rosalina", origin: "Super Mario Galaxy", desc: "Guardian of the cosmos. Watches over the Lumas from the Comet Observatory. Cosmic queen.", meaning: "Little rose" },
+      { name: "Lucina", origin: "Fire Emblem", desc: "Princess who traveled back in time to prevent the apocalypse. Disguised herself as Marth.", meaning: "Light, illumination" },
+      { name: "Midna", origin: "Twilight Princess", desc: "Twilight Princess herself. Sarcastic, powerful, and revealed as the true ruler of the Twilight Realm.", meaning: "Derived from midnight" },
+      { name: "Palutena", origin: "Kid Icarus", desc: "Goddess of Light. Commands armies, cracks jokes, fights alongside Pit.", meaning: "Derived from Pallas Athena" },
+      { name: "Urbosa", origin: "Breath of the Wild", desc: "Gerudo chieftain Champion who commands lightning and is descended from warrior queens.", meaning: "Powerful and regal" },
+      { name: "Mipha", origin: "Breath of the Wild", desc: "Zora princess and Champion whose healing grace protects Link even after death.", meaning: "Elegant and gentle" },
+      { name: "Nayru", origin: "The Legend of Zelda", desc: "Named after the goddess of wisdom. One of the three golden goddesses who created Hyrule.", meaning: "Wisdom (Zelda mythology)" },
+      { name: "Riju", origin: "Breath of the Wild", desc: "Youngest Gerudo chief. Rides a sand seal into battle like a queen.", meaning: "Short, regal" },
+      { name: "Edelgard", origin: "Fire Emblem: Three Houses", desc: "Emperor who declared war on the gods themselves to free humanity from divine control.", meaning: "Noble guardian" },
+    ],
+    boy: [
+      { name: "Link", origin: "The Legend of Zelda", desc: "The Hero of Time. Silent, brave, picks up every damn pot. Gaming's most enduring hero.", meaning: "The link between player and game" },
+      { name: "Fox", origin: "Star Fox", desc: "Fox McCloud. Ace pilot, leader of Star Fox team. 'Do a barrel roll!'", meaning: "Sharp, quick, cunning" },
+      { name: "Ness", origin: "EarthBound", desc: "A kid from Onett who saved the world with a baseball bat and psychic powers.", meaning: "Headland, promontory" },
+      { name: "Marth", origin: "Fire Emblem", desc: "The Hero-King. United the continent, wielded the divine Falchion. Where Fire Emblem began.", meaning: "Dedicated to Mars" },
+      { name: "Ike", origin: "Fire Emblem", desc: "'I fight for my friends.' Mercenary son who became a legend. The people's champion.", meaning: "Laughter (Hebrew)" },
+      { name: "Sidon", origin: "Breath of the Wild", desc: "Zora prince with the most radiant smile in gaming who inspires Link with pure charisma.", meaning: "Fishing place (Biblical)" },
+      { name: "Rex", origin: "Xenoblade Chronicles 2", desc: "Salvager who bonds with the legendary blade Pyra and fights to reach Elysium.", meaning: "King" },
+      { name: "Dimitri", origin: "Fire Emblem: Three Houses", desc: "Prince driven to madness by vengeance who claws his way back to become a just king.", meaning: "Earth-lover (Greek)" },
+      { name: "Revali", origin: "Breath of the Wild", desc: "Rito archer Champion who created his own wind technique through sheer ego and talent.", meaning: "Sounds like reveal and rival" },
+    ]
+  },
+  "Movies": {
+    girl: [
+      { name: "Ripley", origin: "Alien", desc: "Ellen Ripley. The original 'final girl' who fought xenomorphs across four films. Genre-defining badass.", meaning: "From the strip of clearing" },
+      { name: "Trinity", origin: "The Matrix", desc: "Trinity. Black leather, rooftop runs, saved Neo with a kiss. 'Dodge this.'", meaning: "Three, triad" },
+      { name: "Leia", origin: "Star Wars", desc: "Princess, general, rebel leader. Strangled Jabba with her own chains. 'I love you.' 'I know.'", meaning: "Child of heaven (Hawaiian)" },
+      { name: "Padme", origin: "Star Wars", desc: "Queen at 14, senator, secret warrior. Fought for democracy until her last breath.", meaning: "Lotus flower" },
+      { name: "Jyn", origin: "Star Wars: Rogue One", desc: "Rebel who led the suicide mission to steal the Death Star plans. Rebellions are built on hope.", meaning: "Short, punchy, powerful" },
+      { name: "Luna", origin: "Harry Potter", desc: "Luna Lovegood. Saw the world differently and was right about everything. Brave, weird, wonderful.", meaning: "Moon" },
+      { name: "Furiosa", origin: "Mad Max", desc: "Imperator Furiosa. One-armed war captain who led the greatest chase scene in cinema to free enslaved women.", meaning: "Furious one" },
+      { name: "Eowyn", origin: "Lord of the Rings", desc: "'I am no man.' Killed the Witch-King of Angmar. Strongest moment in the trilogy.", meaning: "Horse joy" },
+      { name: "Arwen", origin: "Lord of the Rings", desc: "Elven princess who chose mortality for love. Gave up eternal life for Aragorn.", meaning: "Noble maiden (Elvish)" },
+      { name: "Galadriel", origin: "Lord of the Rings", desc: "Most powerful elf in Middle-earth. Resisted the One Ring. Diminished rather than take power.", meaning: "Maiden crowned with radiant garland" },
+      { name: "Shuri", origin: "Black Panther", desc: "Teenage genius who designed Wakanda's most advanced tech and became Black Panther.", meaning: "Village (Swahili)" },
+      { name: "Hermione", origin: "Harry Potter", desc: "Brightest witch of her age who carried Harry and Ron through everything with brains and bravery.", meaning: "Earthly, messenger" },
+      { name: "Selene", origin: "Underworld", desc: "Vampire death dealer. Centuries old, still dangerous, still elegant.", meaning: "Moon goddess" },
+      { name: "Nova", origin: "Marvel / Sci-Fi", desc: "The name means new star. Used across Marvel, Planet of the Apes, and countless sci-fi universes.", meaning: "New star that suddenly increases in brightness" },
+      { name: "Nebula", origin: "Marvel", desc: "Rebuilt herself from cybernetic parts after every defeat. Ultimate perseverance and redemption.", meaning: "Cloud, mist (astronomical)" },
+    ],
+    boy: [
+      { name: "Neo", origin: "The Matrix", desc: "The One. Woke up from the simulation. 'I know kung fu.' Changed cinema forever.", meaning: "New" },
+      { name: "Logan", origin: "X-Men", desc: "Wolverine. Adamantium claws, regeneration, and the most emotional superhero farewell ever filmed.", meaning: "Little hollow" },
+      { name: "Maximus", origin: "Gladiator", desc: "'Father to a murdered son, husband to a murdered wife, and I will have my vengeance.' Enough said.", meaning: "Greatest" },
+      { name: "Aragorn", origin: "Lord of the Rings", desc: "The ranger who became king. Led the charge at the Black Gate knowing he might die.", meaning: "Noble valor (Elvish)" },
+      { name: "Maverick", origin: "Top Gun", desc: "Pete 'Maverick' Mitchell. 'I feel the need... the need for speed.' The ultimate call sign.", meaning: "Independent, nonconformist" },
+      { name: "Atlas", origin: "Greek Myth / Sci-Fi", desc: "The titan who held up the sky. In sci-fi, the name of stations, cities, and heroes.", meaning: "Bearer of the heavens" },
+      { name: "Kylo", origin: "Star Wars", desc: "Kylo Ren. Conflicted, powerful, dramatic. The best villain entrance in modern Star Wars.", meaning: "Sky (derived)" },
+      { name: "Loki", origin: "Norse Myth / Marvel", desc: "God of Mischief. Shapeshifter. Died for his brother. 'I assure you, brother, the sun will shine on us again.'", meaning: "Trickster, airy" },
+      { name: "Cassian", origin: "Star Wars: Rogue One", desc: "Intelligence officer who gave everything for the Rebellion. Fighting since age six.", meaning: "Sounds noble (from Cassius)" },
+      { name: "Sirius", origin: "Harry Potter", desc: "Wrongly imprisoned godfather who escaped Azkaban. Dog-transforming rebel hero. Brightest star in the sky.", meaning: "The Dog Star, burning" },
+      { name: "Draco", origin: "Harry Potter", desc: "Rival trapped by his family's darkness. Complex antagonist with a redemption arc.", meaning: "Dragon" },
+      { name: "Morpheus", origin: "The Matrix", desc: "Believed in The One when nobody else did. Freed Neo and trained him to break reality.", meaning: "God of dreams, shaper" },
+      { name: "Anakin", origin: "Star Wars", desc: "The Chosen One. Born from the Force itself. Fell to darkness, redeemed by his son's love.", meaning: "Warrior, giant" },
+      { name: "Kael", origin: "Fantasy Films", desc: "Dark commander archetype. Sounds sharp, elven, and powerful.", meaning: "Mighty warrior (Gaelic)" },
+      { name: "Fenrir", origin: "Norse Myth / Harry Potter", desc: "The giant wolf destined to swallow the sun. Terrifying and mythic.", meaning: "Fen dweller (Old Norse)" },
+    ]
+  },
+  "Historical Legends": {
+    girl: [
+      { name: "Frida", origin: "Frida Kahlo", desc: "Mexican painter who turned pain into the most powerful art of the 20th century. Unibrow icon.", meaning: "Peace, beloved" },
+      { name: "Ada", origin: "Ada Lovelace", desc: "The world's first computer programmer. In the 1840s. A woman. Before computers existed.", meaning: "Noble, adornment" },
+      { name: "Artemis", origin: "Greek Mythology", desc: "Goddess of the hunt, the moon, and the wild. Twin of Apollo, protector of young women.", meaning: "Safe, bear goddess" },
+      { name: "Freya", origin: "Norse Mythology", desc: "Goddess of love, war, and death who rides a chariot pulled by cats. Collects half the slain warriors.", meaning: "Noble woman, lady" },
+      { name: "Athena", origin: "Greek Mythology", desc: "Goddess of wisdom and strategic warfare. Born fully armored from Zeus's head.", meaning: "Sharp, praise" },
+      { name: "Boudica", origin: "Celtic Queen (60 AD)", desc: "Led a revolt against the Roman Empire. Burned London to the ground. They found the ash layer.", meaning: "Victory" },
+      { name: "Hypatia", origin: "Ancient Alexandria", desc: "Mathematician, astronomer, philosopher. Last great thinker of ancient Alexandria.", meaning: "Supreme, highest" },
+      { name: "Cleopatra", origin: "Egyptian Queen", desc: "Spoke 9 languages. Seduced Caesar and Antony. Ruled Egypt for 21 years. Not just a pretty face. Cleo for short.", meaning: "Glory of the father" },
+      { name: "Valentina", origin: "Valentina Tereshkova", desc: "First woman in space. 1963. Solo mission. The Earth is blue and she proved it.", meaning: "Strength, health" },
+      { name: "Zenobia", origin: "Queen of Palmyra (3rd century)", desc: "Warrior queen who conquered Egypt and half the Roman East before Rome sent an entire army to stop her.", meaning: "Life of Zeus" },
+      { name: "Tomoe", origin: "Tomoe Gozen (12th century Japan)", desc: "Samurai warrior woman who decapitated enemy generals and rode into battle first.", meaning: "Blessing, beautiful friend" },
+      { name: "Valkyrie", origin: "Norse Mythology", desc: "Divine warrior women who decide who lives and dies in battle. Choosers of the slain.", meaning: "Chooser of the slain" },
+      { name: "Kira", origin: "Multiple Cultures", desc: "Used across Russian, Japanese, and Irish cultures. Evokes light and power.", meaning: "Ruler (Russian), sparkle (Japanese), dark-haired (Irish)" },
+      { name: "Sappho", origin: "Greek Poet (6th century BC)", desc: "Greatest lyric poet of antiquity. Plato called her the Tenth Muse.", meaning: "Sapphire" },
+    ],
+    boy: [
+      { name: "Leonidas", origin: "Sparta", desc: "King of the 300. Held Thermopylae. 'Then we will fight in the shade.' History's most legendary last stand.", meaning: "Lion-like" },
+      { name: "Orion", origin: "Greek Mythology", desc: "Giant hunter placed among the stars. The most recognizable constellation in the night sky.", meaning: "Rising in the sky" },
+      { name: "Atlas", origin: "Greek Mythology", desc: "Titan condemned to hold up the entire sky for eternity. Symbol of endurance.", meaning: "To carry, endure" },
+      { name: "Tesla", origin: "Nikola Tesla", desc: "Invented alternating current, radio, and the modern world. Died broke. Edison is still wrong.", meaning: "From Teslici, Serbia" },
+      { name: "Magnus", origin: "Multiple legends", desc: "Alexander Magnus, Magnus Carlsen, Magnus the Red. The name itself means greatness.", meaning: "Great" },
+      { name: "Cyrus", origin: "Cyrus the Great", desc: "Founded the largest empire the world had ever seen. Wrote the first declaration of human rights.", meaning: "Sun, throne" },
+      { name: "Odin", origin: "Norse Mythology", desc: "All-Father who sacrificed his eye for wisdom and hung from the World Tree to learn the runes.", meaning: "Frenzy, fury, inspiration" },
+      { name: "Thor", origin: "Norse Mythology", desc: "God of thunder who protects humanity with Mjolnir. Strongest of the Norse gods.", meaning: "Thunder" },
+      { name: "Ragnar", origin: "Ragnar Lothbrok", desc: "Legendary Viking king who raided Paris and whose sons conquered England.", meaning: "Warrior of judgment" },
+      { name: "Apollo", origin: "Greek Mythology", desc: "God of music, poetry, sun, healing, and prophecy. The most multifaceted Olympian.", meaning: "Destroyer, sun" },
+      { name: "Dante", origin: "Dante Alighieri", desc: "Wrote the Divine Comedy. Literally mapped Hell, Purgatory, and Heaven in poetry.", meaning: "Enduring, steadfast" },
+      { name: "Achilles", origin: "The Iliad", desc: "Greatest warrior of the Trojan War. Nearly invincible. Chose glory over a long life.", meaning: "Pain of the people" },
+      { name: "Hannibal", origin: "Hannibal Barca", desc: "Crossed the Alps with war elephants and brought Rome to its knees. Greatest military tactician ever.", meaning: "Grace of Baal" },
+      { name: "Galileo", origin: "Galileo Galilei", desc: "'And yet it moves.' Proved the Earth orbits the Sun. Told the church to sit down.", meaning: "From Galilee" },
+      { name: "Spartacus", origin: "Gladiator/Rebel", desc: "Led 70,000 slaves against Rome. The most legendary rebellion in history.", meaning: "From Sparta" },
+    ]
+  }
+};
+
+const categories = Object.keys(nameBank);
+let customCategories = {};
+
+function init() {
+  createStars();
+  renderCategories();
+  renderFavorites();
+}
+
+function createStars() {
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    const size = Math.random() * 2.5 + 0.5;
+    star.style.width = size + 'px';
+    star.style.height = size + 'px';
+    star.style.left = Math.random() * 100 + '%';
+    star.style.top = Math.random() * 100 + '%';
+    star.style.setProperty('--dur', (Math.random() * 3 + 2) + 's');
+    star.style.setProperty('--max-o', Math.random() * 0.6 + 0.2);
+    star.style.animationDelay = Math.random() * 5 + 's';
+    container.appendChild(star);
+  }
+}
+
+function setGender(g) {
+  gender = g;
+  document.body.className = g + '-mode';
+  document.getElementById('opt-girl').className = 'toggle-option ' + (g === 'girl' ? 'active-girl' : 'inactive');
+  document.getElementById('opt-boy').className = 'toggle-option ' + (g === 'boy' ? 'active-boy' : 'inactive');
+}
+
+function toggleGender() {
+  setGender(gender === 'girl' ? 'boy' : 'girl');
+}
+
+function renderCategories() {
+  const grid = document.getElementById('category-grid');
+  grid.innerHTML = '';
+
+  const allBtn = document.createElement('button');
+  allBtn.className = 'cat-btn' + (activeCategories.has('All') ? ' active' : '');
+  allBtn.textContent = 'הכל';
+  allBtn.onclick = () => { activeCategories.clear(); activeCategories.add('All'); renderCategories(); };
+  grid.appendChild(allBtn);
+
+  const allCats = [...categories, ...Object.keys(customCategories)];
+  allCats.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn' + (activeCategories.has(cat) ? ' active' : '');
+    btn.textContent = cat;
+    btn.onclick = () => {
+      activeCategories.delete('All');
+      if (activeCategories.has(cat)) activeCategories.delete(cat);
+      else activeCategories.add(cat);
+      if (activeCategories.size === 0) activeCategories.add('All');
+      renderCategories();
+    };
+    grid.appendChild(btn);
+  });
+}
+
+function addCustomTopic() {
+  const input = document.getElementById('custom-input');
+  const topic = input.value.trim();
+  if (!topic) return;
+
+  if (!customCategories[topic]) {
+    customCategories[topic] = { girl: [], boy: [] };
+    // Placeholder — users can expand
+    customCategories[topic].girl.push({ name: "?", origin: topic, desc: "Add names from " + topic + " — coming soon!", meaning: "Custom category" });
+    customCategories[topic].boy.push({ name: "?", origin: topic, desc: "Add names from " + topic + " — coming soon!", meaning: "Custom category" });
+  }
+
+  activeCategories.delete('All');
+  activeCategories.add(topic);
+  input.value = '';
+  renderCategories();
+}
+
+function generateName() {
+  let pool = [];
+  const activeCats = activeCategories.has('All') ? categories : [...activeCategories];
+
+  activeCats.forEach(cat => {
+    const bank = nameBank[cat] || customCategories[cat];
+    if (bank && bank[gender]) {
+      bank[gender].forEach(entry => {
+        if (!usedNames.has(entry.name + '-' + gender)) {
+          pool.push({ ...entry, category: cat });
+        }
+      });
+    }
+  });
+
+  // Reset if all used
+  if (pool.length === 0) {
+    usedNames.clear();
+    activeCats.forEach(cat => {
+      const bank = nameBank[cat] || customCategories[cat];
+      if (bank && bank[gender]) {
+        bank[gender].forEach(entry => pool.push({ ...entry, category: cat }));
+      }
+    });
+  }
+
+  if (pool.length === 0) return;
+
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  usedNames.add(pick.name + '-' + gender);
+  currentName = pick;
+
+  const card = document.getElementById('result-card');
+  card.classList.remove('visible');
+
+  setTimeout(() => {
+    document.getElementById('result-category').textContent = pick.category;
+    document.getElementById('result-name').textContent = pick.name.toUpperCase();
+    document.getElementById('result-origin').textContent = pick.origin;
+    document.getElementById('result-desc').textContent = pick.desc;
+    document.getElementById('result-meaning').textContent = pick.meaning ? 'משמעות: ' + pick.meaning : '';
+    card.classList.add('visible');
+  }, 100);
+}
+
+function addFavorite() {
+  if (!currentName) return;
+  const entry = { name: currentName.name, gender, category: currentName.category };
+  if (!favorites.find(f => f.name === entry.name && f.gender === entry.gender)) {
+    favorites.push(entry);
+    localStorage.setItem('loyfer-favorites', JSON.stringify(favorites));
+    renderFavorites();
+  }
+}
+
+function removeFavorite(name, g) {
+  favorites = favorites.filter(f => !(f.name === name && f.gender === g));
+  localStorage.setItem('loyfer-favorites', JSON.stringify(favorites));
+  renderFavorites();
+}
+
+function renderFavorites() {
+  const section = document.getElementById('favorites-section');
+  const list = document.getElementById('fav-list');
+  if (favorites.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  list.innerHTML = '';
+  favorites.forEach(f => {
+    const chip = document.createElement('span');
+    chip.className = 'fav-chip';
+    chip.textContent = (f.gender === 'girl' ? '\u2640 ' : '\u2642 ') + f.name + ' Loyfer';
+    chip.title = 'Click to remove';
+    chip.onclick = () => removeFavorite(f.name, f.gender);
+    list.appendChild(chip);
+  });
+}
+
+init();
+</script>
+</body>
+</html>
